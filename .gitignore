@@ -1,0 +1,12 @@
+__pycache__/
+.venv/
+*.py[cod]
+.python-version
+.env
+
+data/**/*
+!data/.gitkeep
+
+database/*.db
+backup/
+logs/
