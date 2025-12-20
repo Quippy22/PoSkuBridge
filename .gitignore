@@ -10,3 +10,6 @@ data/**/*
 database/*.db
 backup/
 logs/
+
+dist/
+build/
