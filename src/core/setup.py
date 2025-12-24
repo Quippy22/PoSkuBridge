@@ -16,7 +16,7 @@ def initialize_filesystem():
     for f in folders:
         os.makedirs(root / f, exist_ok=True)
 
-    # Setup 'data/' if isnt there
+    # Setup 'data/' if it doesn't exist
     folders = ["inbound", "active", "export"]
     for f in folders:
         os.makedirs(root / "data" / f, exist_ok=True)
@@ -25,12 +25,16 @@ def initialize_filesystem():
     excel_path = root / "data" / "Master Catalog.xlsx"
     # Check if the file is missing
     if not os.path.exists(excel_path):
+        # Prepare dataframes
         headers = ["Wharehouse Code", "Official Description", "Keywords"]
-        h = pd.DataFrame([], columns=headers)
-        h.to_excel(excel_path, index=True)
+        h1 = pd.DataFrame([], columns=headers)
+        h2 = pd.DataFrame([], columns=headers[:2])
+        
+        # Write the sheets 
+        with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+            h1.to_excel(writer, sheet_name="Core", index=True)
+            h2.to_excel(writer, sheet_name="Mappings", index=True)
 
     print("File system initialized")
 
-
-def initialize_database():
-    pass
+    
