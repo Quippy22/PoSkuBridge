@@ -1,28 +1,28 @@
 import os
 from pathlib import Path
-
+import sqlite3
 import pandas as pd
 
 
+# Path for this file
+CURRENT_FILE = Path(__file__).resolve()
+# src/core/setup.py -> src/core/ -> src/ -> root 
+ROOT = CURRENT_FILE.parent.parent.parent
+
 def initialize_filesystem():
-    # Path for this file
-    current_file = Path(__file__).resolve()
 
-    # src/core/setup.py -> src/core/ -> src/ -> root
-    root = current_file.parent.parent.parent
-
-    # Setup the root folders
+    # Setup the ROOT folders
     folders = ["data", "database", "logs", "backups"]
     for f in folders:
-        os.makedirs(root / f, exist_ok=True)
+        os.makedirs(ROOT / f, exist_ok=True)
 
     # Setup 'data/' if it doesn't exist
     folders = ["inbound", "active", "export"]
     for f in folders:
-        os.makedirs(root / "data" / f, exist_ok=True)
+        os.makedirs(ROOT / "data" / f, exist_ok=True)
 
     # Setup the 'Master Catalog' in data/
-    excel_path = root / "data" / "Master Catalog.xlsx"
+    excel_path = ROOT / "data" / "Master Catalog.xlsx"
     # Check if the file is missing
     if not os.path.exists(excel_path):
         # Prepare dataframes
@@ -38,3 +38,24 @@ def initialize_filesystem():
     print("File system initialized")
 
     
+def sync_database():
+    # Path to the database and too the xlsx file
+    db_path = "database/mappings.db"
+    excel_path = ROOT / "data" / "Master Catalog.xlsx"
+
+    # Read the specific sheet from Excel
+    try:
+        df = pd.read_excel(excel_path, sheet_name="Mappings")
+        df = df.drop(columns=["Official Description"], errors="ignore")
+    except Exception as e:
+        print(f"Error reading Excel: {e}")
+        return
+    
+    # Connect to the sql 
+    conn = sqlite3.connect(db_path)
+
+    #  Sync the data
+    df.to_sql('mappings', conn, if_exists='replace', index=False)
+    
+    conn.close()
+    print("Sync completed")
