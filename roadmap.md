@@ -5,9 +5,10 @@
 
 ## Phase 1: The "Walking Skeleton" (Infrastructure)
 **Goal:** Establish the environment, automated initialization, and safety backups.
-- [ ] **Init Sequence:** Script to verify/create folder structure (`/input`, `/processing`, `/output`, `/history`).
-- [ ] **Database Setup:** Initialize SQLite `system_memory.db` with tables for `Core_Inventory` and `Mappings`.
-- [ ] **Master Catalog Generation:** Create `Master_Catalog.xlsx` template if not present.
+- [x] **Init Sequence:** Script to verify/create folder structure (`/inbound`, `/active`, `/export`, `/logs`).
+- [x] **Master Catalog Generation:** Create `Master Catalog.xlsx` template if not present.
+- [ ] **Database Setup:** Initialize SQLite `mappings.db` with tables for `Core_Inventory` and `Mappings`.
+- [ ] **Action Log:** Generate structured `.txt` in `/logs` for every session.
 - [ ] **Backup Engine:** Implement a timestamped backup routine for the `.db` and `.xlsx` files on every system launch.
 - [ ] **Faker Module:** Create a script to generate "Mock POs" (JSON/CSV) to test logic without real PDFs.
 
@@ -27,16 +28,15 @@
 - [ ] **Triage Logic:** - 🟢 **Green:** Direct SKU hit (Move to buffer).
     - 🟡 **Yellow:** 70%+ score (Suggest best guess).
     - 🔴 **Red:** <70% score (Manual entry required).
-- [ ] **Evaluation Trigger:** Generate `Catalog_Evaluation.xlsx` and trigger "Auto-Open" for the Clerk.
+- [ ] **Evaluation Trigger:** Generate `Catalog Evaluation.xlsx` and trigger "Auto-Open" for the Clerk.
 
 ---
 
 ## Phase 4: The Loop & History (Human-in-the-Loop)
 **Goal:** Monitor clerk work, validate inputs, and record actions.
-- [ ] **The Watcher:** Implement `watchdog` to monitor `Catalog_Evaluation.xlsx` for save events.
+- [ ] **The Watcher:** Implement `watchdog` to monitor `Catalog Evaluation.xlsx` for save events.
 - [ ] **Live Validation:** Check for unresolved Red items upon save; prevent finalization if incomplete.
-- [ ] **Catalog Sync:** Automated write-back of new SKU/Alias mappings to `Master_Catalog.xlsx`.
-- [ ] **Action Log:** Generate structured `.txt` in `/history` for every session.
+- [ ] **Catalog Sync:** Automated write-back of new SKU/Alias mappings to `Master Catalog.xlsx`.
 
 ---
 
@@ -51,5 +51,5 @@
 ## Phase 6: Full Automation (The Ingestor)
 **Goal:** Eliminate manual handling of input files.
 - [ ] **Email Listener:** Add an IMAP thread to auto-download PDF attachments from a specific inbox.
-- [ ] **Excel Management:** Implement the auto-close logic for `Catalog_Evaluation.xlsx` once processing is verified.
+- [ ] **Excel Management:** Implement the auto-close logic for `Catalog Evaluation.xlsx` once processing is verified.
 - [ ] **Final CLI Polish:** High-visibility status updates for the Clerk’s dashboard.
