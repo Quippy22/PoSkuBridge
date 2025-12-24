@@ -8,8 +8,8 @@
 - [x] **Init Sequence:** Script to verify/create folder structure (`/inbound`, `/active`, `/export`, `/logs`).
 - [x] **Master Catalog Generation:** Create `Master Catalog.xlsx` template if not present.
 - [ ] **Database Setup:** Initialize SQLite `mappings.db` with tables for `Core_Inventory` and `Mappings`.
-- [ ] **Action Log:** Generate structured `.txt` in `/logs` for every session.
 - [ ] **Backup Engine:** Implement a timestamped backup routine for the `.db` and `.xlsx` files on every system launch.
+- [ ] **Action Log:** Generate structured `.txt` in `/logs` for every session.
 - [ ] **Faker Module:** Create a script to generate "Mock POs" (JSON/CSV) to test logic without real PDFs.
 
 ---
@@ -34,6 +34,7 @@
 
 ## Phase 4: The Loop & History (Human-in-the-Loop)
 **Goal:** Monitor clerk work, validate inputs, and record actions.
+- [ ] **The CLI** Implement a CLI for initialization and live status updates.
 - [ ] **The Watcher:** Implement `watchdog` to monitor `Catalog Evaluation.xlsx` for save events.
 - [ ] **Live Validation:** Check for unresolved Red items upon save; prevent finalization if incomplete.
 - [ ] **Catalog Sync:** Automated write-back of new SKU/Alias mappings to `Master Catalog.xlsx`.

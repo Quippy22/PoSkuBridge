@@ -7,7 +7,7 @@ PoSkuBridge is designed as a modular, human-in-the-loop data pipeline.
 
 * **Master Catalog (`Master_Catalog.xlsx`):** The primary source of truth.
     * **Sheet 1 (Core):** `Warehouse_Code` | `Official_Description` | `Keywords`.
-    * **Sheet 2 (Mappings):** `Warehouse_Code` | `Description_Aliases` | `Supplier_Columns...`.
+    * **Sheet 2 (Mappings):** `Warehouse_Code` | `Official_Description` | `Supplier_Columns...`.
 * **System Memory (`system_memory.db`):** A SQLite mirror of Sheet 2 for high-speed lookup and fuzzy matching.
 * **Active Log (`Active_Log.xlsx`):** A transient workspace in the `/processing` folder where the Clerk resolves non-automated matches.
 

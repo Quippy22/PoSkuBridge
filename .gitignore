@@ -11,5 +11,8 @@ database/*.db
 backup/
 logs/
 
+# dev scripts
+scripts/
+
 dist/
 build/
