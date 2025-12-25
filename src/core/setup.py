@@ -1,28 +1,26 @@
 import os
-from pathlib import Path
 import sqlite3
+from pathlib import Path
+
 import pandas as pd
 
+from core.config import config
 
-# Path for this file
-CURRENT_FILE = Path(__file__).resolve()
-# src/core/setup.py -> src/core/ -> src/ -> root 
-ROOT = CURRENT_FILE.parent.parent.parent
 
 def initialize_filesystem():
 
-    # Setup the ROOT folders
+    # Setup the config.root folders
     folders = ["data", "database", "logs", "backups"]
     for f in folders:
-        os.makedirs(ROOT / f, exist_ok=True)
+        os.makedirs(config.root / f, exist_ok=True)
 
     # Setup 'data/' if it doesn't exist
     folders = ["inbound", "active", "export"]
     for f in folders:
-        os.makedirs(ROOT / "data" / f, exist_ok=True)
+        os.makedirs(config.root / "data" / f, exist_ok=True)
 
     # Setup the 'Master Catalog' in data/
-    excel_path = ROOT / "data" / "Master Catalog.xlsx"
+    excel_path = config.root / "data" / "Master Catalog.xlsx"
     # Check if the file is missing
     if not os.path.exists(excel_path):
         # Prepare dataframes
@@ -41,7 +39,7 @@ def initialize_filesystem():
 def sync_database():
     # Path to the database and too the xlsx file
     db_path = "database/mappings.db"
-    excel_path = ROOT / "data" / "Master Catalog.xlsx"
+    excel_path = config.root / "data" / "Master Catalog.xlsx"
 
     # Read the specific sheet from Excel
     try:
