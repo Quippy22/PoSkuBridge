@@ -7,9 +7,8 @@
 **Goal:** Establish the environment, automated initialization, and safety backups.
 - [x] **Init Sequence:** Script to verify/create folder structure (`/inbound`, `/active`, `/export`, `/logs`).
 - [x] **Master Catalog Generation:** Create `Master Catalog.xlsx` template if not present.
-- [ ] **Database Setup:** Initialize SQLite `mappings.db` with tables for `Core_Inventory` and `Mappings`.
-- [ ] **Backup Engine:** Implement a timestamped backup routine for the `.db` and `.xlsx` files on every system launch.
-- [ ] **Action Log:** Generate structured `.txt` in `/logs` for every session.
+- [x] **Database Setup:** Initialize SQLite `mappings.db` with tables for `Core_Inventory` and `Mappings`.
+- [x] **Backup Engine:** Implement a timestamped backup routine for the `.db` and `.xlsx` files on every system launch.
 - [ ] **Faker Module:** Create a script to generate "Mock POs" (JSON/CSV) to test logic without real PDFs.
 
 ---
@@ -34,7 +33,6 @@
 
 ## Phase 4: The Loop & History (Human-in-the-Loop)
 **Goal:** Monitor clerk work, validate inputs, and record actions.
-- [ ] **The CLI** Implement a CLI for initialization and live status updates.
 - [ ] **The Watcher:** Implement `watchdog` to monitor `Catalog Evaluation.xlsx` for save events.
 - [ ] **Live Validation:** Check for unresolved Red items upon save; prevent finalization if incomplete.
 - [ ] **Catalog Sync:** Automated write-back of new SKU/Alias mappings to `Master Catalog.xlsx`.
@@ -46,6 +44,7 @@
 - [ ] **CSV Production:** Generate the final WMS-ready delivery file.
 - [ ] **The "Smell Test" Flag:** Implement custom logic to flag statistical outliers (e.g., unusual quantities or historical mapping mismatches).
 - [ ] **Persistent CLI:** Finalize the main loop with clean console outputs and "Awaiting new PO..." status.
+- [ ] **Action Log:** Generate structured `.txt` in `/logs` for every session.
 
 ---
 
