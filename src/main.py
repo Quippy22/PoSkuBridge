@@ -1,4 +1,5 @@
 from core import initialize_filesystem, sync_database, backup
+from tools.catalog_generator import catalog_gen
 
 
 def main():
@@ -10,6 +11,13 @@ def main():
 
     # Save the initial state of the files
     backup("INITIAL_STATE")
+
+    # Fill the catalog with fake data
+    catalog_gen() 
+    sync_database()
+
+    # Back up the new data
+    backup("Manual")
 
 
 if __name__ == "__main__":
