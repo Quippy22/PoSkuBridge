@@ -24,7 +24,7 @@ def initialize_filesystem():
     # Check if the file is missing
     if not os.path.exists(excel_path):
         # Prepare dataframes
-        headers = ["Wharehouse Code", "Official Description", "Keywords"]
+        headers = ["Warehouse Code", "Official Description", "Keywords"]
         h1 = pd.DataFrame([], columns=headers)
         h2 = pd.DataFrame([], columns=headers[:2])
         
@@ -37,23 +37,58 @@ def initialize_filesystem():
 
     
 def sync_database():
-    # Path to the database and too the xlsx file
-    db_path = "database/mappings.db"
+    print("Sync started")
+    """
+    The logic flow:
+    1. Read Sheet 1 (The Source of Codes)
+    2. Read Sheet 2 (The Existing Mappings)
+    3. Merege them: add new codes but keep the existing mappings
+    4. Database Sync: take the mappings from sheet 2 and push them to SQL 
+    """
+    # Path to the xlsx file
     excel_path = config.root / "data" / "Master Catalog.xlsx"
 
-    # Read the specific sheet from Excel
+    # Read the sheets from Excel
+    # First sheet
     try:
-        df = pd.read_excel(excel_path, sheet_name="Mappings")
-        df = df.drop(columns=["Official Description"], errors="ignore")
+        sheet1 = pd.read_excel(excel_path, sheet_name="Core")
+        sheet1 = sheet1.drop(columns=["Keywords"], errors="ignore")
+
+        # The first column might be Unnamed since index=True
+        if "Unnamed" in sheet1.columns[0]:
+            sheet1 = sheet1.drop(sheet1.columns[0], axis=1)
     except Exception as e:
-        print(f"Error reading Excel: {e}")
+        print(f"Error reading sheet 1(Core): {e}")
+
+    # Second sheet
+    try:
+        sheet2 = pd.read_excel(excel_path, sheet_name="Mappings")
+        if "Unnamed" in sheet2.columns[0]:
+            sheet2 = sheet2.drop(sheet2.columns[0], axis=1)
+    except Exception as e:
+        print(f"Error reading sheet 2(Mappings): {e}")
         return
-    
+
+    # Merge the dataframes
+    sheet2 = pd.merge(
+        sheet1.iloc[:, [0, 1]],
+        sheet2,
+        on=list(sheet1.columns[:2]),
+        how="left"
+    ) 
+
+    # Write the second sheet
+    with pd.ExcelWriter(excel_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+        sheet2.to_excel(writer, sheet_name="Mappings", index=True)
+
+    # Sync the database 
+    db_path = "database/mappings.db"
     # Connect to the sql 
     conn = sqlite3.connect(db_path)
 
-    #  Sync the data
-    df.to_sql('mappings', conn, if_exists='replace', index=False)
-    
+    # Sync the data
+    sheet2 = sheet2.drop(sheet2.columns[1], axis=1)
+    sheet2.to_sql('mappings', conn, if_exists='replace', index=False)
+ 
     conn.close()
     print("Sync completed")

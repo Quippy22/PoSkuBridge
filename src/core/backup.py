@@ -30,6 +30,7 @@ def backup(tag="auto"):
         
         # Save the settings
         config.to_json(backup_folder / "settings.json")
+        print("Backed up settings.json")
 
         # Prune if necessary
         if config.max_backups is not None:
