@@ -3,6 +3,11 @@ import os
 from pathlib import Path
 
 def nuke_environment():
+    confirm = input("This will delete all data and databases. Are you sure? (y/n): ")
+    if confirm.lower() != 'y':
+        print("Nuke aborted.")
+        return
+
     # Define paths to destroy
     targets = [
         "data/inbound",
@@ -33,10 +38,3 @@ def nuke_environment():
             print(f"[ ] {target} does not exist. Skipping.")
 
     print("\n✅ Environment wiped. Run your setup script to rebuild.")
-
-if __name__ == "__main__":
-    confirm = input("This will delete all data and databases. Are you sure? (y/n): ")
-    if confirm.lower() == 'y':
-        nuke_environment()
-    else:
-        print("Nuke aborted.")

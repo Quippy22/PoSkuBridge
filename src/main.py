@@ -1,8 +1,10 @@
 from core import initialize_filesystem, sync_database, backup
-from tools.catalog_generator import catalog_gen
+from tools import  nuke_environment, catalog_gen, pdf
 
 
 def main():
+    # For testng, wipe all the files before starting
+    nuke_environment()
     # Set up the folder structure if it doesn't exist
     initialize_filesystem()
 
@@ -18,6 +20,9 @@ def main():
 
     # Back up the new data
     backup("Manual")
+
+    pdf.generate_pdf()
+    pdf.print_po_table()
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@
 - [x] **Master Catalog Generation:** Create `Master Catalog.xlsx` template if not present.
 - [x] **Database Setup:** Initialize SQLite `mappings.db` with tables for `Core_Inventory` and `Mappings`.
 - [x] **Backup Engine:** Implement a timestamped backup routine for the `.db` and `.xlsx` files on every system launch.
-- [ ] **Faker Module:** Create a script to generate "Mock POs" (JSON/CSV) to test logic without real PDFs.
+- [x] **Faker Module:** Create a script to generate "Mock POs" (JSON/CSV) to test logic without real PDFs.
 
 ---
 
