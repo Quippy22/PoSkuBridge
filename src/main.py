@@ -1,4 +1,4 @@
-from core import initialize_filesystem, sync_database, backup
+from core import initialize_filesystem, sync_database, backup, parser
 from tools import  nuke_environment, catalog_gen, pdf
 
 
@@ -23,6 +23,9 @@ def main():
 
     pdf.generate_pdf()
     pdf.print_po_table()
+
+    parser.run(pdf.po_num + ".pdf")
+    print(parser.po_table)
 
 
 if __name__ == "__main__":

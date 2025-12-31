@@ -193,7 +193,7 @@ class PoGenerator():
         return po_item
 
     def print_po_table(self):
-        print(f"{'QTY':<5} | {'DESCRIPTION':<50} | {'PRICE':<10} | {'TOTAL':<10}")
+        print(f"{'QTY':<5} | {'SKU':<15} | {'DESCRIPTION':<50} | {'PRICE':<10} | {'TOTAL':<10}")
         print("-" * 85)  # A line to separate header from data
 
         for item in self.po_table:

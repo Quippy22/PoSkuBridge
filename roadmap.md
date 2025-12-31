@@ -15,16 +15,17 @@
 
 ## Phase 2: The Parsing Engine (PDF Ingestion)
 **Goal:** Transform messy supplier PDFs into structured data.
-- [ ] **Library Integration:** Set up `pdfplumber` or `pypdf` for table extraction.
-- [ ] **Header Mapping:** Logic to identify "SKU", "Description", "Price", and "Qty" regardless of column order.
-- [ ] **Text Normalization:** Strip special characters and lowercase all input for matching consistency.
+- [x] **Library Integration:** Set up `pdfplumber` for table extraction.
+- [x] **Header Mapping:** Logic to identify "SKU", "Description", "Price", and "Qty" regardless of column order.
+- [x] **Text Normalization:** Strip special characters and lowercase all input for matching consistency.
 
 ---
 
 ## Phase 3: The Scoring & Triage Engine (The Brain)
 **Goal:** Implement the 70% weighted density logic for automated decision-making.
 - [ ] **Scoring Algorithm:** Compare PO words against Master Keywords (+10 for full, +5 for partial).
-- [ ] **Triage Logic:** - 🟢 **Green:** Direct SKU hit (Move to buffer).
+- [ ] **Triage Logic:** 
+    - 🟢 **Green:** Direct SKU hit (Move to buffer).
     - 🟡 **Yellow:** 70%+ score (Suggest best guess).
     - 🔴 **Red:** <70% score (Manual entry required).
 - [ ] **Evaluation Trigger:** Generate `Catalog Evaluation.xlsx` and trigger "Auto-Open" for the Clerk.
