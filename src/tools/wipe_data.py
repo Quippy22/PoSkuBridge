@@ -1,10 +1,11 @@
-import shutil
 import os
+import shutil
 from pathlib import Path
+
 
 def nuke_environment():
     confirm = input("This will delete all data and databases. Are you sure? (y/n): ")
-    if confirm.lower() != 'y':
+    if confirm.lower() != "y":
         print("Nuke aborted.")
         return
 
@@ -17,7 +18,7 @@ def nuke_environment():
         "data",
         "database",
         "backups",
-        "logs"
+        "logs",
     ]
 
     print("⚠️  Starting Environment Nuke...")

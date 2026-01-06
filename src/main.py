@@ -1,5 +1,5 @@
-from core import initialize_filesystem, sync_database, backup, parser
-from tools import  nuke_environment, catalog_gen, pdf
+from core import backup, initialize_filesystem, parser, sync_database
+from tools import PoGenerator, catalog_gen, nuke_environment
 
 
 def main():
@@ -15,12 +15,13 @@ def main():
     backup("INITIAL_STATE")
 
     # Fill the catalog with fake data
-    catalog_gen() 
+    catalog_gen()
     sync_database()
 
     # Back up the new data
     backup("Manual")
 
+    pdf = PoGenerator()
     pdf.generate_pdf()
     pdf.print_po_table()
 
@@ -30,4 +31,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

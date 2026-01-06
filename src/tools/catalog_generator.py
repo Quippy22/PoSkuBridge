@@ -13,7 +13,6 @@ Roadmap:
 5. File Export: Save the final product to data/Master_Catalog.xlsx using the openpyxl engine.
 """
 
-import os
 import random
 
 import pandas as pd
@@ -31,25 +30,74 @@ def wh_code_gen():
     suffix = random.choice(suffixes)
     return f"{prefix}-{number:03d}-{suffix}"
 
+
 def item_data_gen():
     """Creates the item description and keywords"""
     adjectives = [
-        "Galvanized", "Stainless", "Insulated", "Heavy-Duty", "Reinforced",
-        "Precision", "Industrial", "Flexible", "Corrugated", "Heat-Resistant",
-        "Synthetic", "Polished", "Rubberized", "Anodized", "Compressed",
-        "Modular", "Magnetic", "Hydraulic", "Pneumatic", "Coated"
+        "Galvanized",
+        "Stainless",
+        "Insulated",
+        "Heavy-Duty",
+        "Reinforced",
+        "Precision",
+        "Industrial",
+        "Flexible",
+        "Corrugated",
+        "Heat-Resistant",
+        "Synthetic",
+        "Polished",
+        "Rubberized",
+        "Anodized",
+        "Compressed",
+        "Modular",
+        "Magnetic",
+        "Hydraulic",
+        "Pneumatic",
+        "Coated",
     ]
     nouns = [
-        "Bolt", "Pipe", "Valve", "Switch", "Coupling", 
-        "Gasket", "Flange", "Bracket", "Washer", "Fitting", 
-        "Piston", "Bearing", "Seal", "Connector", "Filter", 
-        "Pump", "Sensor", "Gear", "Bushing", "Spring"
+        "Bolt",
+        "Pipe",
+        "Valve",
+        "Switch",
+        "Coupling",
+        "Gasket",
+        "Flange",
+        "Bracket",
+        "Washer",
+        "Fitting",
+        "Piston",
+        "Bearing",
+        "Seal",
+        "Connector",
+        "Filter",
+        "Pump",
+        "Sensor",
+        "Gear",
+        "Bushing",
+        "Spring",
     ]
     sizes = [
-        "10mm", "5-inch", "12-gauge", "240V", "1/2-inch", 
-        "3-meter", "50lb", "20-amp", "M8", "15psi", 
-        "110V", "2-inch", "40mm", "6-foot", "0.5-hp", 
-        "10k-psi", "18-gauge", "1/4-NPT", "220V", "75mm"
+        "10mm",
+        "5-inch",
+        "12-gauge",
+        "240V",
+        "1/2-inch",
+        "3-meter",
+        "50lb",
+        "20-amp",
+        "M8",
+        "15psi",
+        "110V",
+        "2-inch",
+        "40mm",
+        "6-foot",
+        "0.5-hp",
+        "10k-psi",
+        "18-gauge",
+        "1/4-NPT",
+        "220V",
+        "75mm",
     ]
 
     words = [
@@ -60,8 +108,9 @@ def item_data_gen():
 
     description = " ".join(words)
     keywords = ", ".join([p.lower() for p in words])
-    
+
     return description, keywords
+
 
 def catalog_gen():
     print("Populating the Master Catalog")
@@ -70,12 +119,12 @@ def catalog_gen():
     # List of dicts
     rows = []
 
-    excel_path = config.root / "data/Master Catalog.xlsx" 
+    excel_path = config.root / "data/Master Catalog.xlsx"
     # Import the headers
     catalog = pd.read_excel(excel_path)
     # The first row is 'Unnamed' because index=True
     # Drop it
-    catalog = catalog.drop(catalog.columns[0], axis=1) 
+    catalog = catalog.drop(catalog.columns[0], axis=1)
 
     for i in range(random.randint(100, 900)):
         code = wh_code_gen()
@@ -87,19 +136,21 @@ def catalog_gen():
         desc, keys = item_data_gen()
 
         row = {
-            catalog.columns[0] : code,
+            catalog.columns[0]: code,
             catalog.columns[1]: desc,
             catalog.columns[2]: keys,
         }
 
         rows.append(row)
-    
+
     # Put the fake data in a dataframe
-    fake_data = pd.DataFrame(rows) 
+    fake_data = pd.DataFrame(rows)
     # Add the fake data to the catalog
     catalog = pd.concat([catalog, fake_data], ignore_index=True)
     print(catalog)
 
     # Save
-    with pd.ExcelWriter(excel_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-            catalog.to_excel(writer, sheet_name="Core", index=True)
+    with pd.ExcelWriter(
+        excel_path, engine="openpyxl", mode="a", if_sheet_exists="replace"
+    ) as writer:
+        catalog.to_excel(writer, sheet_name="Core", index=True)

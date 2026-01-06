@@ -1,6 +1,5 @@
 import os
 import sqlite3
-from pathlib import Path
 
 import pandas as pd
 
@@ -8,7 +7,6 @@ from core.config import config
 
 
 def initialize_filesystem():
-
     # Setup the config.root folders
     folders = ["data", "database", "logs", "backups"]
     for f in folders:
@@ -27,15 +25,15 @@ def initialize_filesystem():
         headers = ["Warehouse Code", "Official Description", "Keywords"]
         h1 = pd.DataFrame([], columns=headers)
         h2 = pd.DataFrame([], columns=headers[:2])
-        
-        # Write the sheets 
+
+        # Write the sheets
         with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
             h1.to_excel(writer, sheet_name="Core", index=True)
             h2.to_excel(writer, sheet_name="Mappings", index=True)
 
     print("File system initialized")
 
-    
+
 def sync_database():
     print("Sync started")
     """
@@ -43,7 +41,7 @@ def sync_database():
     1. Read Sheet 1 (The Source of Codes)
     2. Read Sheet 2 (The Existing Mappings)
     3. Merege them: add new codes but keep the existing mappings
-    4. Database Sync: take the mappings from sheet 2 and push them to SQL 
+    4. Database Sync: take the mappings from sheet 2 and push them to SQL
     """
     # Path to the xlsx file
     excel_path = config.root / "data" / "Master Catalog.xlsx"
@@ -71,24 +69,23 @@ def sync_database():
 
     # Merge the dataframes
     sheet2 = pd.merge(
-        sheet1.iloc[:, [0, 1]],
-        sheet2,
-        on=list(sheet1.columns[:2]),
-        how="left"
-    ) 
+        sheet1.iloc[:, [0, 1]], sheet2, on=list(sheet1.columns[:2]), how="left"
+    )
 
     # Write the second sheet
-    with pd.ExcelWriter(excel_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+    with pd.ExcelWriter(
+        excel_path, engine="openpyxl", mode="a", if_sheet_exists="replace"
+    ) as writer:
         sheet2.to_excel(writer, sheet_name="Mappings", index=True)
 
-    # Sync the database 
+    # Sync the database
     db_path = "database/mappings.db"
-    # Connect to the sql 
+    # Connect to the sql
     conn = sqlite3.connect(db_path)
 
     # Sync the data
     sheet2 = sheet2.drop(sheet2.columns[1], axis=1)
-    sheet2.to_sql('mappings', conn, if_exists='replace', index=False)
- 
+    sheet2.to_sql("mappings", conn, if_exists="replace", index=False)
+
     conn.close()
     print("Sync completed")
