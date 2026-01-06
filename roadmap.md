@@ -1,56 +1,63 @@
 # PoSkuBridge Development Roadmap
-**Version:** 1.0 | **Project Lead:** Developer | **Status:** Initiated
+**Version:** 2.0 | **Architecture:** Python + SQLite + ttkbootstrap (Desktop App)
 
 ---
 
-## Phase 1: The "Walking Skeleton" (Infrastructure)
-**Goal:** Establish the environment, automated initialization, and safety backups.
-- [x] **Init Sequence:** Script to verify/create folder structure (`/inbound`, `/active`, `/export`, `/logs`).
-- [x] **Master Catalog Generation:** Create `Master Catalog.xlsx` template if not present.
-- [x] **Database Setup:** Initialize SQLite `mappings.db` with tables for `Core_Inventory` and `Mappings`.
-- [x] **Backup Engine:** Implement a timestamped backup routine for the `.db` and `.xlsx` files on every system launch.
-- [x] **Faker Module:** Create a script to generate "Mock POs" (JSON/CSV) to test logic without real PDFs.
+## Phase 1: Infrastructure & Database (The Foundation)
+**Goal:** Establish the SQLite database as the single source of truth and verify environment.
+- [x] **Init Sequence:** Verify folder structure (`/inbound`, `/export`, `/logs`).
+- [x] **Backup Engine:** Timestamped backups of the `.db` file on launch.
+- [ ] **DB Schema V2:** Finalize SQLite structure (`products` for core inventory, `mappings` for vendor aliases).
+- [ ] **Seeder Script:** One-time migration of `Master Catalog.xlsx` into `mappings.db`. (Excel dependencies removed after this).
+- [ ] **Faker Module:** Update mock data generator to query the new SQLite DB instead of using random logic.
 
 ---
 
-## Phase 2: The Parsing Engine (PDF Ingestion)
-**Goal:** Transform messy supplier PDFs into structured data.
-- [x] **Library Integration:** Set up `pdfplumber` for table extraction.
-- [x] **Header Mapping:** Logic to identify "SKU", "Description", "Price", and "Qty" regardless of column order.
-- [x] **Text Normalization:** Strip special characters and lowercase all input for matching consistency.
+## Phase 2: The Parsing Engine (PDF Extraction)
+**Goal:** Transform messy supplier PDFs into a clean, human-readable DataFrame.
+- [x] **Library Integration:** `pdfplumber` extraction logic.
+- [x] **Header Mapping:** Dynamic column recognition (identifying QTY, SKU, DESC columns).
+- [x] **Structural Cleanup:** Deduplication of ghost columns and merging of split text.
+- [ ] **Standardization Hook:** Ensure output is a standard list of objects ready for the UI (keeping original Descriptions intact).
 
 ---
 
-## Phase 3: The Scoring & Triage Engine (The Brain)
-**Goal:** Implement the 70% weighted density logic for automated decision-making.
-- [ ] **Scoring Algorithm:** Compare PO words against Master Keywords (+10 for full, +5 for partial).
-- [ ] **Triage Logic:** 
-    - 🟢 **Green:** Direct SKU hit (Move to buffer).
-    - 🟡 **Yellow:** 70%+ score (Suggest best guess).
-    - 🔴 **Red:** <70% score (Manual entry required).
-- [ ] **Evaluation Trigger:** Generate `Catalog Evaluation.xlsx` and trigger "Auto-Open" for the Clerk.
+## Phase 3: The UI Skeleton (The "Visual" Bridge)
+**Goal:** Build the GUI container to visualize the data flow.
+- [ ] **Main Window:** Setup `ttkbootstrap` Window with valid theme.
+- [ ] **Tab 1 (Console):** A "Process Log" text area + "Load PDF" Button.
+- [ ] **Tab 2 (Triage):** Empty TableView placeholder + "Commit" button (Disabled).
+- [ ] **Wiring:** Connect the "Load PDF" button to trigger the Phase 2 parser and print success/fail to the log.
 
 ---
 
-## Phase 4: The Loop & History (Human-in-the-Loop)
-**Goal:** Monitor clerk work, validate inputs, and record actions.
-- [ ] **The Watcher:** Implement `watchdog` to monitor `Catalog Evaluation.xlsx` for save events.
-- [ ] **Live Validation:** Check for unresolved Red items upon save; prevent finalization if incomplete.
-- [ ] **Catalog Sync:** Automated write-back of new SKU/Alias mappings to `Master Catalog.xlsx`.
+## Phase 4: The Matcher Logic (The "Brain")
+**Goal:** Connect the Parsed Data to the Database to generate status flags.
+- [ ] **Normalization (Internal):** Create a temporary normalized version of the description *only* for keyword matching (leaving UI data untouched).
+- [ ] **Query Logic:**
+    - **Step 1 (Hard Match):** SQL query for exact Vendor SKU matches in `mappings` table.
+    - **Step 2 (Soft Match):** Fuzzy keyword scoring against `products` table if no exact match found.
+- [ ] **Status Assignment:** Tag every row object with:
+    - 🟢 **GREEN:** Direct DB hit.
+    - 🟡 **YELLOW:** High confidence prediction.
+    - 🔴 **RED:** Unknown/New item.
 
 ---
 
-## Phase 5: Export & The "Smell Test"
-**Goal:** Final output production and high-level error detection.
-- [ ] **CSV Production:** Generate the final WMS-ready delivery file.
-- [ ] **The "Smell Test" Flag:** Implement custom logic to flag statistical outliers (e.g., unusual quantities or historical mapping mismatches).
-- [ ] **Persistent CLI:** Finalize the main loop with clean console outputs and "Awaiting new PO..." status.
-- [ ] **Action Log:** Generate structured `.txt` in `/logs` for every session.
+## Phase 5: Interaction & Learning (The Triage)
+**Goal:** The Clerk corrects data in the UI and the system learns.
+- [ ] **Triage Table Implementation:** Render the rows in Tab 2.
+    - **Red/Yellow:** Editable Autocomplete Combobox connected to `products` table.
+    - **Green:** Read-only view.
+- [ ] **Catalog Search:** "Magnifying Glass" popup to fuzzy search the `products` table (replacing the need to open Excel).
+- [ ] **Commit Logic:**
+    - **Write-Back:** Insert new confirmed mappings into the `mappings` table.
+    - **Export:** Generate the final WMS-ready `.xlsx` or `.csv`.
 
 ---
 
-## Phase 6: Full Automation (The Ingestor)
-**Goal:** Eliminate manual handling of input files.
-- [ ] **Email Listener:** Add an IMAP thread to auto-download PDF attachments from a specific inbox.
-- [ ] **Excel Management:** Implement the auto-close logic for `Catalog Evaluation.xlsx` once processing is verified.
-- [ ] **Final CLI Polish:** High-visibility status updates for the Clerk’s dashboard.
+## Phase 6: Polish & Automation
+**Goal:** Final error handling and user experience improvements.
+- [ ] **Smell Test:** Flag statistical outliers (e.g., unusually high quantities).
+- [ ] **Action Logs:** Save daily session logs to `/logs` for audit trails.
+- [ ] **Email Listener (Future):** Optional IMAP integration to auto-download PDFs.

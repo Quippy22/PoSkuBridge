@@ -1,51 +1,59 @@
-# Logic Specification: PoSkuBridge
+# Logic Specification: PoSkuBridge (v2.0)
 
 ---
 
-## 1. System Infrastructure
-PoSkuBridge is designed as a modular, human-in-the-loop data pipeline.
+## 1. System Architecture
+PoSkuBridge moves away from Excel-dependency to a robust Desktop App + SQLite architecture.
 
-* **Master Catalog (`Master_Catalog.xlsx`):** The primary source of truth.
-    * **Sheet 1 (Core):** `Warehouse_Code` | `Official_Description` | `Keywords`.
-    * **Sheet 2 (Mappings):** `Warehouse_Code` | `Official_Description` | `Supplier_Columns...`.
-* **System Memory (`system_memory.db`):** A SQLite mirror of Sheet 2 for high-speed lookup and fuzzy matching.
-* **Active Log (`Active_Log.xlsx`):** A transient workspace in the `/processing` folder where the Clerk resolves non-automated matches.
-
----
-
-## 2. The Scoring & Triage Engine
-The system audits PO descriptions against the Master Catalog using a **Weighted Density Score**.
-
-### Scoring Rules:
-* **Maximum Points:** 10 points × the number of words in the PO description.
-* **Full Keyword Match:** +10 points (Exact word found in Master Keywords).
-* **Partial Keyword Match:** +5 points (Fuzzy match, e.g., "Reg" vs "Regulator").
-
-### The Traffic Light Logic:
-* 🟢 **GREEN (100%):** Exact `Supplier_SKU` match found in the database. (Bypasses human review).
-* 🟡 **YELLOW (≥ 70%):** High-confidence match. System suggests the best-scoring code in the Log.
-* 🔴 **RED (< 70%):** Low-confidence match. Suggestion is left blank, forcing manual entry.
+* **Database (`poskubridge.db`):** The single source of truth.
+    * **Table `products`:** The internal master catalog (SKU, Description, Keywords).
+    * **Table `mappings`:** Vendor-specific knowledge (Vendor_SKU -> Internal_SKU).
+* **GUI (`ttkbootstrap`):** The interface for all user interactions (Load, Review, Export).
 
 ---
 
-## 3. The Human-in-the-Loop Workflow
+## 2. The Matching Engine
+The system processes every line item from a PDF through a two-step logic:
 
-1.  **Ingestion:** A PDF PO is dropped into the `/input` folder.
-2.  **Sync Check:** The system verifies if `Master_Catalog.xlsx` has been modified since the last database update and re-syncs if necessary.
-3.  **Matching:** * Green items are held in an internal buffer.
-    * Yellow/Red items are written to `Active_Log.xlsx`.
-4.  **Feedback Loop (The Watcher):**
-    * The Clerk opens the Log and types **'Y'** (to accept a Yellow) or enters a **[Warehouse Code]** (to resolve a Red).
-    * Every time the Clerk saves the file, the system checks for unresolved rows.
-    * If rows remain, the Log is regenerated with only the outstanding items.
-5.  **Finalization:**
-    * New SKU/Alias mappings are written back to **Sheet 2** of the Master Catalog.
-    * The production `Delivery.csv` is exported to `/output`.
-    * A session history is recorded in the `/history` folder.
+### Step 1: The Hard Match (Vendor Knowledge)
+* **Input:** `Vendor SKU` from the PDF.
+* **Query:** Check the `mappings` table for an exact match.
+* **Result:** 
+    * If Found -> **🟢 GREEN Flag** (Auto-assign Internal SKU).
+    * If Not Found -> Proceed to Step 2.
+
+### Step 2: The Soft Match (Fuzzy Logic)
+* **Input:** `Description` from the PDF.
+* **Process:** Normalize text (remove special chars, lowercase) and score against keywords in the `products` table.
+* **Result:**
+    * **High Score (>Threshold):** **🟡 YELLOW Flag** (Suggest best match).
+    * **Low Score:** **🔴 RED Flag** (Unknown item).
 
 ---
 
-## 4. History & Audit Trail
-Every action is documented in a structured `.txt` format for error tracing and accountability:
+## 3. The User Workflow (The "Triage")
 
-`[TIMESTAMP] | [PO_ID] | [FLAG] | [INPUT_TEXT] | [RESULT_CODE] | [METHOD]`
+1.  **Ingestion (Tab 1):** 
+    * User clicks "Load PDF".
+    * System parses the file and runs the Matching Engine.
+    * User is automatically switched to Tab 2.
+
+2.  **Review (Tab 2):** 
+    * The user is presented with a table of all line items.
+    * **Green Rows:** Read-only (Verified).
+    * **Yellow Rows:** Dropdown pre-filled with suggestion. User can Confirm or Change.
+    * **Red Rows:** Empty dropdown. User must search/select the correct product.
+
+3.  **Completion:**
+    * **Commit:** User clicks "Commit" button.
+    * **Learning:** New mappings (Red/Yellow resolutions) are saved to the `mappings` table.
+    * **Export:** A clean `.xlsx` or `.csv` is generated in the `/export` folder.
+
+---
+
+## 4. Safety & Logging
+* **Backups:** The `.db` file is backed up to `/backups` with a timestamp on every application launch.
+* **Audit Logs:** Every session generates a `.txt` log in `/logs` recording:
+    * Files processed.
+    * User decisions (mappings created).
+    * Errors or anomalies.
