@@ -8,7 +8,6 @@
 - [x] **Init Sequence:** Verify folder structure (`/inbound`, `/export`, `/logs`).
 - [x] **Backup Engine:** Timestamped backups of the `.db` file on launch.
 - [ ] **DB Schema V2:** Finalize SQLite structure (`products` for core inventory, `mappings` for vendor aliases).
-- [ ] **Seeder Script:** One-time migration of `Master Catalog.xlsx` into `mappings.db`. (Excel dependencies removed after this).
 - [ ] **Faker Module:** Update mock data generator to query the new SQLite DB instead of using random logic.
 
 ---
@@ -24,10 +23,10 @@
 
 ## Phase 3: The UI Skeleton (The "Visual" Bridge)
 **Goal:** Build the GUI container to visualize the data flow.
-- [ ] **Main Window:** Setup `ttkbootstrap` Window with valid theme.
-- [ ] **Tab 1 (Console):** A "Process Log" text area + "Load PDF" Button.
+- [x] **Main Window:** Setup `ttkbootstrap` Window with valid theme.
+- [x] **Tab 1 (Dashboard):** A "Process Log" text area + Buttons.
 - [ ] **Tab 2 (Triage):** Empty TableView placeholder + "Commit" button (Disabled).
-- [ ] **Wiring:** Connect the "Load PDF" button to trigger the Phase 2 parser and print success/fail to the log.
+- [ ] **Wiring:** Connect to the backend
 
 ---
 
