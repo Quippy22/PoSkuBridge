@@ -1,4 +1,4 @@
 from .backup import backup
-from .config import config
-from .pdf_parser import parser
-from .setup import initialize_filesystem, sync_database
+from .config import settings
+from .pdf_parser import PdfParser
+from .setup import initialize_database, initialize_filesystem

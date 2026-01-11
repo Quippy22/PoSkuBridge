@@ -3,12 +3,12 @@ import re
 import pandas as pd
 import pdfplumber
 
-from core import config
+from core import settings
 
 
 class PdfParser:
     def __init__(self):
-        self.dir_path = config.root / "data/inbound"
+        self.dir_path = settings.root / "data/inbound"
 
         self.pdf = None
         self.pages = None
@@ -269,6 +269,3 @@ class PdfParser:
         self.po_table = self.po_table.apply(
             lambda x: x.str.strip() if x.dtype == "object" else x
         )
-
-
-parser = PdfParser()

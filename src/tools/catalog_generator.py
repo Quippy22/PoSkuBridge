@@ -10,14 +10,11 @@ Roadmap:
 3. Construct the Official_Description by randomly sampling the adjective, size, and noun lists.
 4. Create a Keywords string (lowercase, comma-separated version of the description).
 5. DataFrame Assembly: Store these entries in a list of dictionaries.
-5. File Export: Save the final product to data/Master_Catalog.xlsx using the openpyxl engine.
 """
 
 import random
 
 import pandas as pd
-
-from core import config
 
 
 def wh_code_gen():
@@ -113,44 +110,32 @@ def item_data_gen():
 
 
 def catalog_gen():
-    print("Populating the Master Catalog")
-    # Store the used warehouse codes, they can't repeat
-    used_codes = []
-    # List of dicts
+    used_codes = set()
     rows = []
 
-    excel_path = config.root / "data/Master Catalog.xlsx"
-    # Import the headers
-    catalog = pd.read_excel(excel_path)
-    # The first row is 'Unnamed' because index=True
-    # Drop it
-    catalog = catalog.drop(catalog.columns[0], axis=1)
+    # 1. Define the headers
+    headers = ['Warehouse Code', 'Description', 'Keywords']
 
+    # 2. Poplulate the list
     for i in range(random.randint(100, 900)):
         code = wh_code_gen()
-        # Generate codes untill a new one is found
+
         while code in used_codes:
             code = wh_code_gen()
-        used_codes.append(code)
+        used_codes.add(code)
 
         desc, keys = item_data_gen()
 
         row = {
-            catalog.columns[0]: code,
-            catalog.columns[1]: desc,
-            catalog.columns[2]: keys,
+            'Warehouse Code': code,
+            'Description': desc,
+            'Keywords': keys,
         }
 
         rows.append(row)
 
-    # Put the fake data in a dataframe
-    fake_data = pd.DataFrame(rows)
-    # Add the fake data to the catalog
-    catalog = pd.concat([catalog, fake_data], ignore_index=True)
-    print(catalog)
+    # 3. Create the DataFrame using the list of rows and specific columns
+    catalog = pd.DataFrame(rows, columns=headers)
 
-    # Save
-    with pd.ExcelWriter(
-        excel_path, engine="openpyxl", mode="a", if_sheet_exists="replace"
-    ) as writer:
-        catalog.to_excel(writer, sheet_name="Core", index=True)
+    print(catalog)
+    return catalog

@@ -1,91 +1,54 @@
 import os
 import sqlite3
 
-import pandas as pd
-
-from core.config import config
+from core import settings
 
 
 def initialize_filesystem():
-    # Setup the config.root folders
-    folders = ["data", "database", "logs", "backups"]
+    # Setup the settings.root folders
+    folders = ["Data", "Database", "Logs", "Backups"]
     for f in folders:
-        os.makedirs(config.root / f, exist_ok=True)
+        os.makedirs(settings.root / f, exist_ok=True)
 
-    # Setup 'data/' if it doesn't exist
-    folders = ["inbound", "active", "export"]
+    # Setup 'Data/' if it doesn't exist
+    folders = ["Input", "Review", "Output", "Archive"]
     for f in folders:
-        os.makedirs(config.root / "data" / f, exist_ok=True)
-
-    # Setup the 'Master Catalog' in data/
-    excel_path = config.root / "data" / "Master Catalog.xlsx"
-    # Check if the file is missing
-    if not os.path.exists(excel_path):
-        # Prepare dataframes
-        headers = ["Warehouse Code", "Official Description", "Keywords"]
-        h1 = pd.DataFrame([], columns=headers)
-        h2 = pd.DataFrame([], columns=headers[:2])
-
-        # Write the sheets
-        with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
-            h1.to_excel(writer, sheet_name="Core", index=True)
-            h2.to_excel(writer, sheet_name="Mappings", index=True)
+        os.makedirs(settings.root / "Data" / f, exist_ok=True)
 
     print("File system initialized")
 
 
-def sync_database():
-    print("Sync started")
-    """
-    The logic flow:
-    1. Read Sheet 1 (The Source of Codes)
-    2. Read Sheet 2 (The Existing Mappings)
-    3. Merege them: add new codes but keep the existing mappings
-    4. Database Sync: take the mappings from sheet 2 and push them to SQL
-    """
-    # Path to the xlsx file
-    excel_path = config.root / "data" / "Master Catalog.xlsx"
+def initialize_database():
+    db_path = settings.root / "Database" / "mappings.db"
 
-    # Read the sheets from Excel
-    # First sheet
-    try:
-        sheet1 = pd.read_excel(excel_path, sheet_name="Core")
-        sheet1 = sheet1.drop(columns=["Keywords"], errors="ignore")
-
-        # The first column might be Unnamed since index=True
-        if "Unnamed" in sheet1.columns[0]:
-            sheet1 = sheet1.drop(sheet1.columns[0], axis=1)
-    except Exception as e:
-        print(f"Error reading sheet 1(Core): {e}")
-
-    # Second sheet
-    try:
-        sheet2 = pd.read_excel(excel_path, sheet_name="Mappings")
-        if "Unnamed" in sheet2.columns[0]:
-            sheet2 = sheet2.drop(sheet2.columns[0], axis=1)
-    except Exception as e:
-        print(f"Error reading sheet 2(Mappings): {e}")
-        return
-
-    # Merge the dataframes
-    sheet2 = pd.merge(
-        sheet1.iloc[:, [0, 1]], sheet2, on=list(sheet1.columns[:2]), how="left"
-    )
-
-    # Write the second sheet
-    with pd.ExcelWriter(
-        excel_path, engine="openpyxl", mode="a", if_sheet_exists="replace"
-    ) as writer:
-        sheet2.to_excel(writer, sheet_name="Mappings", index=True)
-
-    # Sync the database
-    db_path = "database/mappings.db"
-    # Connect to the sql
     conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-    # Sync the data
-    sheet2 = sheet2.drop(sheet2.columns[1], axis=1)
-    sheet2.to_sql("mappings", conn, if_exists="replace", index=False)
+    cursor.execute("PRAGMA foreign_keys = ON;")
 
-    conn.close()
-    print("Sync completed")
+    products_sql = """
+    CREATE TABLE IF NOT EXISTS products (
+        warehouse_code TEXT PRIMARY KEY,
+        description TEXT,
+        keywords TEXT
+    );
+    """
+
+    mappings_sql = """
+    CREATE TABLE IF NOT EXISTS mappings (
+        warehouse_code TEXT,
+
+        FOREIGN KEY(warehouse_code) REFERENCES products(warehouse_code)
+            ON UPDATE CASCADE
+            ON DELETE CASCADE
+    );
+    """
+
+    try:
+        cursor.execute(products_sql)
+        cursor.execute(mappings_sql)
+        print(f"Database initialized at: {db_path}")
+    except Exception as e:
+        print(f"Database failed, error: {e}")
+    finally:
+        conn.close()

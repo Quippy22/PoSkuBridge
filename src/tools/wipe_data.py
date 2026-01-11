@@ -11,14 +11,14 @@ def nuke_environment():
 
     # Define paths to destroy
     targets = [
-        "data/inbound",
-        "data/active",
-        "data/export",
-        "data/Master Catalog.xlsx",
-        "data",
-        "database",
-        "backups",
-        "logs",
+        "Data/Input",
+        "Data/Output",
+        "Data/Review",
+        "Data/Archive",
+        "Data",
+        "Database",
+        "Backups",
+        "Logs",
     ]
 
     print("⚠️  Starting Environment Nuke...")

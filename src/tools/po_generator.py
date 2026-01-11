@@ -6,7 +6,8 @@ import pandas as pd
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-from core import config
+from core import settings
+from tools import catalog_gen
 
 
 class PoGenerator:
@@ -16,7 +17,7 @@ class PoGenerator:
         # Calculate the PO number here,
         # It is also used as the name for the file
         self.po_num = f"PO-{random.randint(10000, 99999)}"
-        self.path = config.root / "data/inbound" / f"{self.po_num}.pdf"
+        self.path = settings.root / "Data/Input" / f"{self.po_num}.pdf"
 
         # Define the supplier here to make a custom SKU for each one
         self.suppliers = ["Acme Supplies", "Global Corp", "Tech Solutions"]
@@ -141,10 +142,8 @@ class PoGenerator:
         )
 
     def _po_table_gen(self):
-        excel_path = config.root / "data/Master Catalog.xlsx"
-        # Read some descriptions from Master Catalog
-        items = pd.read_excel(excel_path, sheet_name="Mappings")
-        # In the excel: first column: index, second: warehouse code, third:description
+        # Generate a fake catalog and take the descriptions
+        items = catalog_gen()
         descriptions = items.iloc[:, 2].tolist()  # The description
 
         # Shrink the list

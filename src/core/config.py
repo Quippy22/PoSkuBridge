@@ -1,5 +1,5 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 
 class Settings:
@@ -88,4 +88,4 @@ class Settings:
             json.dump(clean_data, f, indent=4)
 
 
-config = Settings()
+settings = Settings()

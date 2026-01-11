@@ -5,9 +5,9 @@
 
 ## Phase 1: Infrastructure & Database (The Foundation)
 **Goal:** Establish the SQLite database as the single source of truth and verify environment.
-- [x] **Init Sequence:** Verify folder structure (`/inbound`, `/export`, `/logs`).
+- [x] **Init Sequence:** Verify folder structure.
 - [x] **Backup Engine:** Timestamped backups of the `.db` file on launch.
-- [ ] **DB Schema V2:** Finalize SQLite structure (`products` for core inventory, `mappings` for vendor aliases).
+- [x] **DB Schema V2:** Finalize SQLite structure (`products` for core inventory, `mappings` for vendor aliases).
 - [ ] **Faker Module:** Update mock data generator to query the new SQLite DB instead of using random logic.
 
 ---
@@ -57,6 +57,5 @@
 
 ## Phase 6: Polish & Automation
 **Goal:** Final error handling and user experience improvements.
-- [ ] **Smell Test:** Flag statistical outliers (e.g., unusually high quantities).
 - [ ] **Action Logs:** Save daily session logs to `/logs` for audit trails.
 - [ ] **Email Listener (Future):** Optional IMAP integration to auto-download PDFs.
