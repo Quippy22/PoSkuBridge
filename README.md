@@ -26,16 +26,22 @@ It features a dedicated GUI built with `ttkbootstrap` that allows workers to vis
 ```text
 PoSkuBridge/
 ├── src/                   # Source Code
-│   ├── main.py            # Application Entry Point
-│   ├── core/              # Business Logic (Parser, Database, Scoring)
-│   ├── gui/               # UI Components (Windows, Tabs, Widgets)
-│   └── tools/             # Utility Scripts (Seeders, Maintenance)
-├── data/                  # Local Data
-│   ├── inbound/           # Drop PDFs here
-│   ├── export/            # Final WMS-ready files
-│   └── database/          # SQLite Database File
-├── backups/               # Automated safety copies of the DB
-└── logs/                  # Session audit trails
+│   ├── core/              # Backend Logic (Settings, Parser, Matcher)
+│   ├── gui/               # Frontend Logic (Windows, Widgets, Themes)
+│   ├── tools/             # Utilities (Database Seeder, Debug scripts)
+│   └── main.py            # Application Entry Point
+│
+├── Data/                  # User-facing folders (The Work Area)
+│   ├── Archive/           # Successfully processed source PDFs (History)
+│   ├── Input/             # Drop new PDF Purchase Orders here
+│   ├── Output/            # Generated Excel/CSV files for WMS import
+│   └── Review/            # Failed/Skipped files requiring manual fix
+│
+└── Internal/              # System files (Hidden/Static Data)
+    ├── Backups/           # Automated snapshots of mappings.db
+    ├── Logs/              # Error logs and session history
+    ├── config.json        # Persistent settings (Theme, Paths, Switches)
+    └── mappings.db        # SQLite Database (SKU Links & Vendor Rules)
 ```
 
 ## 🛠️ Tech Stack

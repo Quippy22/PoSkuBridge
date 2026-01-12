@@ -9,12 +9,11 @@ def main():
 
     # Set up the folder structure if it doesn't exist
     initialize_filesystem()
-
     # Set up the database if it doesn't exist
     initialize_database()
 
     # Save the initial state of the files
-    backup("INITIAL_STATE")
+    backup("initial state")
 
 
 if __name__ == "__main__":

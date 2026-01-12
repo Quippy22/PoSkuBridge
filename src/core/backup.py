@@ -5,18 +5,17 @@ from core.config import settings
 
 
 def backup(tag="auto"):
-    # 1. Setup Paths
-    backup_root = settings.root / "Backups"
+    # 1. Setup
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     folder_name = f"backup_{timestamp}_{tag}"
-    temp_folder = backup_root / folder_name
+    temp_folder = settings.backup_path / folder_name
 
     # 2. Define what to backup (Destination Name : Source Object/Path)
-    # logic: if value is a Path, copy it. If it's a method (like to_json), call it.
+    # logic: if value is a Path, copy it. If it's a method (like .save), call it.
     targets = {
-        "mappings.db": settings.root / "Database/mappings.db",
-        # "settings.json": settings.to_json,  # passing the function to call later
-        # "system.log": settings.root / "Logs/system.log" # Easy to add later
+        "mappings.db": settings.db_path,
+        "config.json": settings.save,  # passing the function to call later
+        # "system.log": settings.logs_path "Logs/system.log" # Easy to add later
     }
 
     try:
@@ -44,7 +43,7 @@ def backup(tag="auto"):
         # 5. Cleanup (Remove the unzipped folder)
         shutil.rmtree(temp_folder)
 
-        # Prune logic (unchanged)
+        # Prune logic
         if settings.max_backups is not None:
             prune_backups()
 
@@ -55,9 +54,8 @@ def backup(tag="auto"):
 def prune_backups():
     # 1. Get a list of all backup directories
     # Filter for folders starting with "backup_"
-    backup_path = settings.root / "backups"
     backups = []
-    for d in backup_path.iterdir():
+    for d in settings.backup_path.iterdir():
         if d.is_dir() and d.name.startswith("backup_"):
             backups.append(d)
 

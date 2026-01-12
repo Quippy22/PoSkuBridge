@@ -8,7 +8,7 @@ from core import settings
 
 class PdfParser:
     def __init__(self):
-        self.dir_path = settings.root / "data/inbound"
+        self.dir_path = settings.input_dir
 
         self.pdf = None
         self.pages = None
@@ -69,7 +69,6 @@ class PdfParser:
             # (?:...) is a non-capturing group for the colon
             # \s* handles spaces
             # (.+) captures the name
-            pattern = rf"{key}(?::)?\s*(.+)"
 
             match = re.search(pattern, text, re.IGNORECASE)
             if match:

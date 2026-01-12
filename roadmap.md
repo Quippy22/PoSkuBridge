@@ -8,7 +8,7 @@
 - [x] **Init Sequence:** Verify folder structure.
 - [x] **Backup Engine:** Timestamped backups of the `.db` file on launch.
 - [x] **DB Schema V2:** Finalize SQLite structure (`products` for core inventory, `mappings` for vendor aliases).
-- [ ] **Faker Module:** Update mock data generator to query the new SQLite DB instead of using random logic.
+- [x] **Faker Module:** Update mock data generator to query the new SQLite DB instead of using random logic.
 
 ---
 

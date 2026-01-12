@@ -2,6 +2,8 @@ import os
 import shutil
 from pathlib import Path
 
+from core import settings
+
 
 def nuke_environment():
     confirm = input("This will delete all data and databases. Are you sure? (y/n): ")
@@ -11,14 +13,16 @@ def nuke_environment():
 
     # Define paths to destroy
     targets = [
-        "Data/Input",
-        "Data/Output",
-        "Data/Review",
-        "Data/Archive",
-        "Data",
-        "Database",
-        "Backups",
-        "Logs",
+            settings.backup_path,
+            settings.logs_path,
+            settings.db_path,
+            settings.config_path,
+            settings.internal_dir,
+            settings.input_dir,
+            settings.output_dir,
+            settings.archive_dir,
+            settings.review_dir,
+            settings.root / "Data"
     ]
 
     print("⚠️  Starting Environment Nuke...")

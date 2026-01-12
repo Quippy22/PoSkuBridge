@@ -3,40 +3,260 @@ from pathlib import Path
 
 
 class Settings:
+    DEFAULTS = {
+        # --- GUI ---
+        "resolution": "640x480",
+        "gui_theme": "litera",
+        # --- WORKFLOW ---
+        # Options: "OFF", "AUTO", "HYBRID"
+        "working_mode": "off",
+        "keep_working_mode": False,
+        # Moved preocessed files into archive folder
+        "archive_processed_files": True,
+        # After processing a file/batch of files open the output folder
+        "open_output_folder": False,
+        # --- MATCHER ---
+        # Switch to turn fuzzy matching ON or OFF
+        "enable_fuzzy_match": False,
+        # The threshold for the fuzzy match (0.1 to 0.9)
+        "fuzzy_threshold": 0.8,
+        # --- BACKUP ---
+        "max_backups": 10,
+        "backup_interval": 24,
+    }
+
     def __init__(self):
         # Paths
-        # src/core/config.py -> src/core/ -> src/ -> root
-        self.root = Path(__file__).resolve().parent.parent.parent
+        self.root = self._get_root_path()
+        self.internal_dir = self.root / "Internal"
+        self.config_path = self.internal_dir / "config.json"
+        self.db_path = self.internal_dir / "mappings.db"
+        self.logs_path = self.internal_dir / "Logs"
+        self.backup_path = self.internal_dir / "Backups"
 
-        # Backup settings
-        self._max_backups = 2
-        self._backup_interval = 24  # Hours
+        # Load the defaults
+        self._data = self.DEFAULTS.copy()
+
+        # Dynamic defaults (Based on Root)
+        self._data["input_dir"] = str(self.root / "Data" / "Input")
+        self._data["output_dir"] = str(self.root / "Data" / "Output")
+        self._data["review_dir"] = str(self.root / "Data" / "Review")
+        self._data["archive_dir"] = str(self.root / "Data" / "Archive")
+
+        # Make sure the internal folder exists
+        self._ensure_internal_structure()
+        # Load settings if they exist
+        self.load()
+
+    def _get_root_path(self):
+        """Finds the Root by searching for the 'src' folder and going one above"""
+        current_path = Path(__file__).resolve()
+        for p in current_path.parents:
+            if p.name == "src":
+                return p.parent
+
+        # If things fail, go back to the origins
+        print("Warning: Could not find 'src' folder. Falling back to relative path.")
+        return Path(__file__).resolve().parent.parent.parent
+
+    def _ensure_internal_structure(self):
+        if not self.internal_dir.exists():
+            self.internal_dir.mkdir(parents=True)
+
+    def load(self):
+        """Loads JSON and pushes values through the Setters"""
+        if not self.config_path.exists():
+            print(f"No config found at {self.config_path}. Creating a new one")
+            self.save()
+            return
+
+        try:
+            with open(self.config_path, "r") as f:
+                loaded_data = json.load(f)
+
+            for key, value in loaded_data.items():
+                self._data[key] = value
+
+            print("Settings loaded.")
+        except Exception as e:
+            print(f"Config corrupt ({e}). Using defaults.")
+            self._data = self.DEFAULTS.copy()
+            self.save()
+
+    def save(self, path=None):
+        if path is None:
+            path = self.config_path
+        with open(path, "w") as f:
+            json.dump(self._data, f, indent=4)
+        print("Saving settings...")
+
+    # -- Path Properties --
+    @property
+    def input_dir(self):
+        return Path(self._data["input_dir"])
+
+    @input_dir.setter
+    def input_dir(self, value):
+        self._data["input_dir"] = str(value)
+        self.save()
 
     @property
+    def output_dir(self):
+        return Path(self._data["output_dir"])
+
+    @output_dir.setter
+    def output_dir(self, value):
+        self._data["output_dir"] = str(value)
+        self.save()
+
+    @property
+    def review_dir(self):
+        return Path(self._data["review_dir"])
+
+    @review_dir.setter
+    def review_dir(self, value):
+        self._data["review_dir"] = str(value)
+        self.save()
+
+    @property
+    def archive_dir(self):
+        return Path(self._data["archive_dir"])
+
+    @archive_dir.setter
+    def archive_dir(self, value):
+        self._data["archive_dir"] = str(value)
+        self.save()
+
+    # -- GUI Properties --
+    @property
+    def resolutin(self):
+        return self._data.get("resolutin")
+
+    @resolutin.setter
+    def resolutin(self, res):
+        self._data["resolutin"] = str(res)
+        self.save()
+
+    @property
+    def gui_theme(self):
+        return self._data.get("gui_theme")
+
+    @gui_theme.setter
+    def gui_theme(self, theme):
+        self._data["gui_theme"] = theme
+        self.save()
+
+    # -- Workflow Properties --
+    @property
+    def working_mode(self):
+        # Default to HYBRID if missing
+        return self._data.get("working_mode")
+
+    @working_mode.setter
+    def working_mode(self, value):
+        # 1. Define allowed states
+        valid_modes = ["off", "auto", "hybrid"]
+
+        # 2. Normalize input (Handle "auto", "Auto", "AUTO")
+        val = str(value).lower()
+
+        # 3. Validate
+        if val in valid_modes:
+            self._data["working_mode"] = val
+            self.save()
+        else:
+            print(f"❌ Invalid mode: '{value}'. Must be one of {valid_modes}")
+
+    @property
+    def archive_processed_files(self):
+        # Default: True (Move files out of Input when done)
+        return self._data.get("archive_processed_files", True)
+
+    @archive_processed_files.setter
+    def archive_processed_files(self, value):
+        self._data["archive_processed_files"] = bool(value)
+        self.save()
+
+    @property
+    def open_output_folder(self):
+        # Default: False (Don't annoy user with popups)
+        return self._data.get("open_output_folder", False)
+
+    @open_output_folder.setter
+    def open_output_folder(self, value):
+        self._data["open_output_folder"] = bool(value)
+        self.save()
+
+    @property
+    def keep_working_mode(self):
+        return self._data.get("keep_working_mode", False)
+
+    @keep_working_mode.setter
+    def keep_working_mode(self, value):
+        self._data["keep_working_mode"] = bool(value)
+        self.save()
+
+    # -- Matcher Properties --
+    @property
+    def enable_fuzzy_match(self):
+        # Master switch for the feature
+        return self._data.get("enable_fuzzy_match", False)
+
+    @enable_fuzzy_match.setter
+    def enable_fuzzy_match(self, value):
+        self._data["enable_fuzzy_match"] = bool(value)
+        self.save()
+
+    @property
+    def fuzzy_threshold(self):
+        # Default to 0.8 if missing
+        return self._data.get("fuzzy_threshold", 0.8)
+
+    @fuzzy_threshold.setter
+    def fuzzy_threshold(self, value):
+        try:
+            val = float(value)
+            val = round(val, 1)
+
+            if val < 0.1:
+                val = 0.1
+            if val > 0.9:
+                val = 0.9
+
+            self._data["fuzzy_threshold"] = val
+            self.save()
+
+        except ValueError:
+            print(f"Invalid threshold: {value}. Must be a number.")
+
+    # -- Backup Properties --
+    @property
     def max_backups(self):
-        return self._max_backups
+        return self._data.get("max_backups")
 
     @max_backups.setter
     def max_backups(self, value):
         if value == 0:
             # None = no limit
-            self._max_backups = None
+            self._data["max_backups"] = None
             print("Backup limit disabled")
+            self.save()
         elif value > 0:
-            self._max_backups = value
+            self._data["max_backups"] = value
             print(f"Backup limit set to {value}")
+            self.save()
         else:
             print(f"Invalid value: {value}, value has to be a pozitive integer!")
 
     @property
     def backup_interval(self):
-        return self._backup_interval
+        return self._data.get("backup_interval")
 
     @backup_interval.setter
     def backup_interval(self, value):
         # 0 = Disabled
         if value == 0 or value == "0":
-            self._backup_interval = 0
+            self._data["backup_interval"] = 0
             print("Automated backups: DISABLED")
             return
 
@@ -53,9 +273,9 @@ class Settings:
                 multipliers = {"h": 1, "d": 24, "w": 168}
 
                 if unit in multipliers:
-                    self._backup_interval = number * multipliers[unit]
+                    self._data["backup_interval"] = number * multipliers[unit]
                     print(
-                        f"Automated backups: Every {self._backup_interval} hours ({value})"
+                        f"Automated backups: Every {self._data.get("backup_interval")} hours ({value})"
                     )
                 else:
                     print(f"Unknown unit '{unit}'. Use h, d, or w.")
@@ -64,28 +284,9 @@ class Settings:
 
         # Logic for raw integers (Hours)
         elif isinstance(value, int) and value > 0:
-            self._backup_interval = value
+            self._data["backup_interval"] = value
             print(f"Automated backups: Every {value} hours")
-
-    def to_json(self, destination_path):
-        # 1. Get the raw dictionary
-        raw_data = vars(self)
-
-        # 2. Create a "Clean" dictionary
-        clean_data = {}
-        for key, value in raw_data.items():
-            # Remove leading underscore if it exists
-            clean_key = key.lstrip("_")
-
-            # Convert Path objects to strings
-            if isinstance(value, Path):
-                clean_data[clean_key] = str(value)
-            else:
-                clean_data[clean_key] = value
-
-        # 3. Save the file
-        with open(destination_path, "w") as f:
-            json.dump(clean_data, f, indent=4)
+        self.save()
 
 
 settings = Settings()

@@ -4,12 +4,8 @@ __pycache__/
 .python-version
 .env
 
-data/**/*
-!data/.gitkeep
-
-database/*.db
-backups/
-logs/
+Internal/
+Data/
 
 dist/
 build/
