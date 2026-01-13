@@ -18,11 +18,11 @@ class PdfParser:
         self.supplier = "Unknown"
         self.po_table = None
 
-    def run(self, file_name):
+    def run(self, file_name) -> tuple[str | None, pd.DataFrame | None]:
         # Open the file
         self._pdf_opener(str(self.dir_path / file_name))
         if self.pdf is None:
-            return
+            return None, None
         # Search for supplier
         self._obtain_supplier()
         # Get the table
@@ -69,6 +69,7 @@ class PdfParser:
             # (?:...) is a non-capturing group for the colon
             # \s* handles spaces
             # (.+) captures the name
+            pattern = rf"{re.escape(key)}\s*[:]?\s*(.+)"
 
             match = re.search(pattern, text, re.IGNORECASE)
             if match:

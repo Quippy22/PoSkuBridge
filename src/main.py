@@ -1,4 +1,4 @@
-from core import backup, initialize_database, initialize_filesystem
+from core import backup, initialize_database, initialize_filesystem, PdfParser
 # Development tools
 from tools import PoGenerator, catalog_gen, nuke_environment
 
@@ -14,6 +14,16 @@ def main():
 
     # Save the initial state of the files
     backup("initial state")
+
+    pogen = PoGenerator()
+    pogen.generate_pdf()
+    pogen.print_po_table()
+
+    parser = PdfParser()
+    supplier, items = parser.run(pogen.po_num)
+    print(f"Supplier: {supplier}")
+    print(items)
+    
 
 
 if __name__ == "__main__":
