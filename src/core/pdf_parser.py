@@ -3,7 +3,8 @@ import re
 import pandas as pd
 import pdfplumber
 
-from core import settings
+from core.config import settings
+from core.logger import log
 
 
 class PdfParser:
@@ -19,6 +20,7 @@ class PdfParser:
         self.po_table = None
 
     def run(self, file_name) -> tuple[str | None, pd.DataFrame | None]:
+        log.info(f"Parsing {file_name}")
         # Open the file
         self._pdf_opener(str(self.dir_path / file_name))
         if self.pdf is None:
@@ -28,20 +30,21 @@ class PdfParser:
         # Get the table
         self._extract_table()
         if self.po_table is None:
-            print("Error: could not detect table")
+            log.error("Could not detect table")
             return self.supplier, None
 
         # If the table isn't empty, clean the data
         self._clean_table()
 
         # Return the supplier and table as a tuple
+        log.info("File parsed")
         return self.supplier, self.po_table
 
     def _pdf_opener(self, file_path):
         try:
             self.pdf = pdfplumber.open(file_path)
         except Exception as e:
-            print(f"Couldnt open file {file_path},error: {e}")
+            log.error(f"Couldnt open file {file_path},error: {e}")
             return
 
         self.pages = self.pdf.pages
@@ -49,7 +52,8 @@ class PdfParser:
         self.page_width = self.pages[0].width
 
     def _obtain_supplier(self):
-        """Looks for supplier, vendor etc in at the top of the first page"""
+        """Looks for supplier, vendor etc at the top of the first page"""
+        log.info("> Obtaining supplier")
         # look into the top 20% of the page (header)
         page = self.pages[0].crop((0, 0, self.page_width, self.page_height * 0.2))
 
@@ -83,6 +87,7 @@ class PdfParser:
         1. Tries to find a specific Grid.
         2. If no grid, assumes whitespace structure.
         """
+        log.info("> Extracting items")
         full_table = []
         for page in self.pages:
             # Remove the header
@@ -115,8 +120,9 @@ class PdfParser:
 
         if full_table:
             self.po_table = pd.DataFrame(full_table[1:], columns=full_table[0])
-        print("Uncleaned DataFrame")
-        print(self.po_table)
+
+        # print("Uncleaned DataFrame")
+        # print(self.po_table)
 
     def _crop_to_header(self, page):
         """
@@ -173,6 +179,7 @@ class PdfParser:
     def _clean_table(self):
         if self.po_table.empty:
             return
+
 
         # 1. Standardize headers
         self.po_table.columns = (

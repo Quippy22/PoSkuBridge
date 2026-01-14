@@ -2,9 +2,11 @@ import shutil
 from datetime import datetime
 
 from core.config import settings
+from core.logger import log
 
 
 def backup(tag="auto"):
+    log.info("Starting backup")
     # 1. Setup
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     folder_name = f"backup_{timestamp}_{tag}"
@@ -28,17 +30,17 @@ def backup(tag="auto"):
             if callable(source):
                 # It's a function (like settings.to_json), so run it
                 source(dest)
-                print(f"Generated {name}")
+                log.info(f"> Generated {name}")
             elif hasattr(source, "exists") and source.exists():
                 # It's a file path, so copy it
                 shutil.copy2(source, dest)
-                print(f"Copied {name}")
+                log.info(f"> Copied {name}")
 
         # 4. Zip it
         shutil.make_archive(
             base_name=str(temp_folder), format="zip", root_dir=temp_folder
         )
-        print(f"✅ Created archive: {folder_name}.zip")
+        log.info(f"> Created archive: {folder_name}.zip")
 
         # 5. Cleanup (Remove the unzipped folder)
         shutil.rmtree(temp_folder)
@@ -46,12 +48,14 @@ def backup(tag="auto"):
         # Prune logic
         if settings.max_backups is not None:
             prune_backups()
-
+    
+        log.info("Backup finished")
     except Exception as e:
-        print(f"❌ Backup failed: {e}")
+        log.error(f"Backup failed: {e}")
 
 
 def prune_backups():
+    log.warning("Reached maximum number of backups. Deleting oldest backups")
     # 1. Get a list of all backup directories
     # Filter for folders starting with "backup_"
     backups = []
@@ -72,6 +76,6 @@ def prune_backups():
             oldest_folder = backups[i]
             try:
                 shutil.rmtree(oldest_folder)
-                print(f"Pruned old backup: {oldest_folder.name}")
+                log.info(f"> Pruned old backup: {oldest_folder.name}")
             except Exception as e:
-                print(f"Could not delete {oldest_folder.name}: {e}")
+                log.error(f"Could not delete {oldest_folder.name}: {e}")

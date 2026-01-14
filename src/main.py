@@ -1,6 +1,11 @@
-from core import backup, initialize_database, initialize_filesystem, PdfParser
+from core.backup import backup
+from core.logger import log
+from core.pdf_parser import PdfParser
+from core.setup import initialize_database, initialize_filesystem
+
 # Development tools
-from tools import PoGenerator, catalog_gen, nuke_environment
+from tools.po_generator import PoGenerator
+from tools.wipe_data import nuke_environment
 
 
 def main():
@@ -23,7 +28,9 @@ def main():
     supplier, items = parser.run(pogen.po_num)
     print(f"Supplier: {supplier}")
     print(items)
-    
+
+    while log.has_messages():
+        print(log.get_next_message())
 
 
 if __name__ == "__main__":

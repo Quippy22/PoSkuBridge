@@ -1,10 +1,12 @@
 import os
 import sqlite3
 
-from core import settings
+from core.config import settings 
+from core.logger import log
 
 
 def initialize_filesystem():
+    log.info("Started filesystem initialization")
     # Setup the internal folder
     internal = [
         settings.backup_path,
@@ -23,10 +25,11 @@ def initialize_filesystem():
     for f in data:
         os.makedirs(f, exist_ok=True)
 
-    print("File system initialized")
+    log.info("File system initialized")
 
 
 def initialize_database():
+    log.info("Started filesystem initialization")
     conn = sqlite3.connect(settings.db_path)
     cursor = conn.cursor()
 
@@ -53,8 +56,8 @@ def initialize_database():
     try:
         cursor.execute(products_sql)
         cursor.execute(mappings_sql)
-        print(f"Database initialized at: {settings.db_path}")
+        log.info("Database initialized")
     except Exception as e:
-        print(f"Database failed, error: {e}")
+        log.error(f"Database failed, error: {e}")
     finally:
         conn.close()

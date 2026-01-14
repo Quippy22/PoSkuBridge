@@ -2,12 +2,11 @@ import datetime
 import random
 import textwrap
 
-import pandas as pd
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-from core import settings
-from tools import catalog_gen
+from core.config import settings
+from tools.catalog_generator import catalog_gen
 
 
 class PoGenerator:
