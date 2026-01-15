@@ -137,5 +137,4 @@ def catalog_gen():
     # 3. Create the DataFrame using the list of rows and specific columns
     catalog = pd.DataFrame(rows, columns=headers)
 
-    print(catalog)
     return catalog

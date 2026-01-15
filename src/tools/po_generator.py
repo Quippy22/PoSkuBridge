@@ -15,7 +15,7 @@ class PoGenerator:
 
         # Calculate the PO number here,
         # It is also used as the name for the file
-        self.po_num = f"PO-{random.randint(10000, 99999)}"
+        self.po_num = f"PO-{random.randint(10000, 99999)}.pdf"
         self.path = settings.input_dir / self.po_num
 
         # Define the supplier here to make a custom SKU for each one

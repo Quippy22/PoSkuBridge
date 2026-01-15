@@ -8,8 +8,8 @@ from core.logger import log
 
 
 class PdfParser:
-    def __init__(self):
-        self.dir_path = settings.input_dir
+    def __init__(self, file_path):
+        self.file_path = file_path
 
         self.pdf = None
         self.pages = None
@@ -19,10 +19,10 @@ class PdfParser:
         self.supplier = "Unknown"
         self.po_table = None
 
-    def run(self, file_name) -> tuple[str | None, pd.DataFrame | None]:
-        log.info(f"Parsing {file_name}")
+    def run(self) -> tuple[str | None, pd.DataFrame | None]:
+        log.info(f"Parsing {self.file_path.name}")
         # Open the file
-        self._pdf_opener(str(self.dir_path / file_name))
+        self._pdf_opener(str(self.file_path))
         if self.pdf is None:
             return None, None
         # Search for supplier
