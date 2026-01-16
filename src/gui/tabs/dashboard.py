@@ -1,10 +1,7 @@
-import datetime
 import ttkbootstrap as ttk
 
-messages = [
-    "System initialized successfully.",
-    "Waiting for user input...",
-]
+from core.logger import log
+from core.config import settings
 
 
 class VisualLogger(ttk.Labelframe):
@@ -24,39 +21,56 @@ class VisualLogger(ttk.Labelframe):
             yscrollcommand=self.scrollbar.set,
         )
         self.log_box.pack(
-            side="left",
-            expand=True,
-            fill="both",
-            padx=(10, 0),
-            pady=(0, 5)
+            side="left", expand=True, fill="both", padx=(10, 0), pady=(0, 5)
         )
 
         self.scrollbar.config(command=self.log_box.yview)
 
-        for msg in messages:
-            self.append_message(msg)
+        # Tag configuration
+        self.log_box.tag_config("INFO")
+        self.log_box.tag_config("WARNING", foreground="yellow")
+        self.log_box.tag_config("ERROR", foreground="red")
 
-    def append_message(self, message):
-        """ Appends a new message to the log window"""
-        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-        log_message = f"[{timestamp}] {message} \n"
+        self.pull_log()
 
-        # 1. unlock the text box
+    def pull_log(self):
+        """Check the log for new messages"""
+        while log.has_messages():
+            packet = log.get_next_message()
+            self.append_message(packet)
+
+        self.after(100, self.pull_log)
+
+    def append_message(self, packet):
+        """Formats and inserts the message with conditional headers."""
+        timestamp = packet.get("time")
+        level = packet.get("level", "INFO")
+        msg = packet.get("msg", "")
+
+        # Show Level only if it's not 'INFO'
+        if level == "INFO":
+            # Format: [09:00:00] Found new file
+            log_text = f"{timestamp} {msg}\n"
+        else:
+            # Format: [09:00:00] ERROR: Worker crashed
+            log_text = f"{timestamp} {level}: {msg}\n"
+
+        # 1. Unlock
         self.log_box.config(state="normal")
 
-        # 2. append the text
-        self.log_box.insert("end", log_message)
+        # 2. Insert (apply the 'level' as a tag for coloring)
+        self.log_box.insert("end", log_text, level)
 
-        # 3. scroll to the end
+        # 3. Scroll & Lock
         self.log_box.see("end")
-
-        # 4. lock the self.log_box
         self.log_box.config(state="disabled")
 
 
 class QueueStatus(ttk.Labelframe):
-    def __init__(self, parent):
+    def __init__(self, parent, backend):
         super().__init__(parent, text="Queue Status", bootstyle="info")
+
+        self.backend = backend
 
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
@@ -67,12 +81,12 @@ class QueueStatus(ttk.Labelframe):
             text="Remaining",
             font=("Segoe UI", 13),
             bootstyle="info"
-        ).grid(row=0, column=0, pady=(10, 10))
+        ).grid(row=0, column=0, pady=(10, 10,))
 
         self.remaining = ttk.Label(
             self,
             text="0",
-            font=("Segoe UI", 20, "bold"),
+            font=("Segoe UI", 20, "bold",),
             bootstyle="info"
         )
         self.remaining.grid(row=1, column=0, pady=(0, 10))
@@ -83,16 +97,36 @@ class QueueStatus(ttk.Labelframe):
             text="Skipped",
             font=("Segoe UI", 13),
             bootstyle="info"
-        ).grid(row=0, column=1, pady=(10, 10))
+        ).grid(row=0, column=1, pady=(10, 10,))
 
         self.skipped = ttk.Label(
             self,
             text="0",
-            font=("Segoe UI", 20, "bold"),
+            font=("Segoe UI", 20, "bold",),
             bootstyle="info"
         )
         self.skipped.grid(row=1, column=1, pady=(0, 10))
+        
+        # Start the loops
+        self.update_remaining()
+        self.update_skipped()
 
+    def update_remaining(self):
+        """Pulls the backend queue size and updates the counter"""
+        try:
+            # Pull the number
+            remaining_count = self.backend.file_queue.qsize()
+            # Display it
+            self.remaining.configure(text=str(remaining_count))
+
+        except Exception as e:
+            log.error(f"Remaining counter: {e}")
+        
+        # Loop the check
+        self.after(200, self.update_remaining)
+
+    def update_skipped(self):
+        pass
 
 class ModeSwitcher(ttk.Labelframe):
     def __init__(self, parent):
@@ -102,30 +136,37 @@ class ModeSwitcher(ttk.Labelframe):
         self.mode.set("off")
 
         self.off_btn = ttk.Radiobutton(
-                self,
-                text="OFF",
-                variable=self.mode,
-                value="off",
-                bootstyle="danger-toolbutton"
-            )
+            self,
+            text="OFF",
+            variable=self.mode,
+            value="off",
+            bootstyle="danger-toolbutton",
+            command=self.update_backend
+        )
         self.auto_btn = ttk.Radiobutton(
-                self,
-                text="AUTO",
-                variable=self.mode,
-                value="auto",
-                bootstyle="success-toolbutton"
-             )
+            self,
+            text="AUTO",
+            variable=self.mode,
+            value="auto",
+            bootstyle="success-toolbutton",
+            command=self.update_backend
+        )
         self.hybrid_btn = ttk.Radiobutton(
-                self,
-                text="HYBRID",
-                variable=self.mode,
-                value="hybrid",
-                bootstyle="info-toolbutton"
-             )
+            self,
+            text="HYBRID",
+            variable=self.mode,
+            value="hybrid",
+            bootstyle="info-toolbutton",
+            command=self.update_backend
+        )
 
         self.off_btn.grid(row=0, column=0, padx=(10, 5), pady=10)
         self.auto_btn.grid(row=0, column=1, padx=5, pady=10)
         self.hybrid_btn.grid(row=0, column=2, padx=(5, 10), pady=10)
+
+    def update_backend(self):
+        settings.working_mode = self.mode.get().lower()
+        log.info(f"Working mode: {self.mode.get()}")
 
 
 class StatusBar(ttk.Labelframe):
@@ -133,12 +174,12 @@ class StatusBar(ttk.Labelframe):
         super().__init__(parent, text="Active Process", bootstyle="secondary")
 
         self.label = ttk.Label(
-                self,
-                text="Ready",
-                font=("Segoe UI", 12),
-                bootstyle="inverse-secondary",
-                anchor="w"
-            )
+            self,
+            text="Ready",
+            font=("Segoe UI", 12),
+            bootstyle="inverse-secondary",
+            anchor="w",
+        )
         self.label.pack(fill="both", padx=5, pady=2)
 
     def set_text(self, message):
@@ -146,63 +187,59 @@ class StatusBar(ttk.Labelframe):
 
 
 class ControlPanel(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, backend):
         super().__init__(parent)
 
         self.parent = parent
+        self.backend = backend
         # Custom style for the buttons to reduce the font size
         style = ttk.Style()
         style.configure(
-            "Exit.danger.TButton",
-            font=("Segoe UI", 10, "bold"),
-            padding=(10, 2)
+            "Exit.danger.TButton", font=("Segoe UI", 10, "bold"), padding=(10, 2)
         )
         style.configure(
-            "Settings.secondary.TButton",
-            font=("Segoe UI", 10),
-            padding=(10, 2)
+            "Settings.secondary.TButton", font=("Segoe UI", 10), padding=(10, 2)
         )
 
         # Exit Button
         self.exit_btn = ttk.Button(
-                self,
-                text="Exit",
-                style="Exit.danger.TButton",
-                command=self.exit,
-                width=6
-            )
+            self,
+            text="Exit",
+            style="Exit.danger.TButton",
+            command=self.exit,
+            width=6
+        )
         self.exit_btn.pack(side="right", padx=(5, 0))
 
         # Settings Button
         self.settings_btn = ttk.Button(
-                self,
-                text="Settings",
-                style="Settings.secondary.TButton",
-                command=self.open_settings,
-                width=6
-            )
+            self,
+            text="Settings",
+            style="Settings.secondary.TButton",
+            command=self.open_settings,
+            width=6,
+        )
         self.settings_btn.pack(side="left", padx=5)
 
     def exit(self):
-        # TODO: Ensure all processes are stopped before exiting
+        # Stop the threads
+        self.backend.exit()
+
+        # Destroy the UI
+        self.parent.after(0, self.parent.destroy())
         self.parent.quit()
+
 
     def open_settings(self):
         pass
 
 
 class Dashboard(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, backend):
         super().__init__(parent)
         # -- LAYER 1 The Main Workspace --
         self.main_area = ttk.Frame(self)
-        self.main_area.pack(
-            side="top",
-            fill="both",
-            expand=True,
-            padx=10,
-            pady=10
-        )
+        self.main_area.pack(side="top", fill="both", expand=True, padx=10, pady=10)
 
         # Left panel: The Logger
         self.logger = VisualLogger(self.main_area)
@@ -213,7 +250,7 @@ class Dashboard(ttk.Frame):
         self.right_panel.pack(side="left", fill="y", padx=(10, 0), anchor="n")
 
         # 1. Queue Status
-        self.queue_status = QueueStatus(self.right_panel)
+        self.queue_status = QueueStatus(self.right_panel, backend)
         self.queue_status.pack(side="top", fill="x", pady=(0, 10))
 
         # 2. Mode Switcher (Stacked Top, right underneath)
@@ -233,5 +270,5 @@ class Dashboard(ttk.Frame):
         self.status_bar.grid(row=0, column=0, columnspan=5, sticky="sew")
 
         # -- Settings & Exit Buttons --
-        self.controls = ControlPanel(self.bottom_bar)
+        self.controls = ControlPanel(self.bottom_bar, backend)
         self.controls.grid(row=0, column=5, sticky="se", padx=(10, 0))

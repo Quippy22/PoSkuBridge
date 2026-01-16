@@ -2,7 +2,7 @@
 Logic:
 populates the 'Master Catalog' with data
 creates warehouse codes: 'prefix-number-suffix'
-descriptions with adjective noun size and then adds then saves them as key words
+descriptions with adjective noun size and then adds them saves them as key words
 
 Roadmap:
 1. Define the Data Pool: Create the Python lists containing the building blocks.
@@ -116,7 +116,7 @@ def catalog_gen():
     # 1. Define the headers
     headers = ['Warehouse Code', 'Description', 'Keywords']
 
-    # 2. Poplulate the list
+    # 2. Populate the list
     for i in range(random.randint(100, 900)):
         code = wh_code_gen()
 

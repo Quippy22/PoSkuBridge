@@ -44,7 +44,7 @@ class PdfParser:
         try:
             self.pdf = pdfplumber.open(file_path)
         except Exception as e:
-            log.error(f"Couldnt open file {file_path},error: {e}")
+            log.error(f"Couldn't open file {file_path},error: {e}")
             return
 
         self.pages = self.pdf.pages
@@ -144,18 +144,6 @@ class PdfParser:
             "ref",
             "part number",
         ]
-        header_keywords = [
-            "sku",
-            "qty",
-            "quantity",
-            "description",
-            "unit price",
-            "price",
-            "unit",
-            "amount",
-            "item",
-            "part number",
-        ]
 
         # Get all words to find positions
         words = page.extract_words()
@@ -186,7 +174,7 @@ class PdfParser:
             self.po_table.columns.astype(str).str.replace(r"\n", "").str.strip()
         )
 
-        # Change duplicate headers  in 'name.number'
+        # Change duplicate headers to 'name.number'
         new_columns = []
         seen_counts = {}  # Tracks how many times we've seen a header
 

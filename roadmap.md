@@ -17,7 +17,7 @@
 - [x] **Library Integration:** `pdfplumber` extraction logic.
 - [x] **Header Mapping:** Dynamic column recognition (identifying QTY, SKU, DESC columns).
 - [x] **Structural Cleanup:** Deduplication of ghost columns and merging of split text.
-- [ ] **Standardization Hook:** Ensure output is a standard list of objects ready for the UI (keeping original Descriptions intact).
+- [x] **Standardization Hook:** Ensure output is a standard list of objects ready for the UI (keeping original Descriptions intact).
 
 ---
 
@@ -26,7 +26,7 @@
 - [x] **Main Window:** Setup `ttkbootstrap` Window with valid theme.
 - [x] **Tab 1 (Dashboard):** A "Process Log" text area + Buttons.
 - [ ] **Tab 2 (Triage):** Empty TableView placeholder + "Commit" button (Disabled).
-- [ ] **Wiring:** Connect to the backend
+- [x] **Wiring:** Connect to the backend
 
 ---
 

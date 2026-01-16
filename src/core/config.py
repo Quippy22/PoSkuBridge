@@ -5,13 +5,13 @@ from pathlib import Path
 class Settings:
     DEFAULTS = {
         # --- GUI ---
-        "resolution": "640x480",
+        "resolution": "800x600",
         "gui_theme": "litera",
         # --- WORKFLOW ---
         # Options: "OFF", "AUTO", "HYBRID"
         "working_mode": "off",
         "keep_working_mode": False,
-        # Moved preocessed files into archive folder
+        # Moved processed files into archive folder
         "archive_processed_files": True,
         # After processing a file/batch of files open the output folder
         "open_output_folder": False,
@@ -129,12 +129,12 @@ class Settings:
 
     # -- GUI Properties --
     @property
-    def resolutin(self):
-        return self._data.get("resolutin")
+    def resolution(self):
+        return self._data.get("resolution")
 
-    @resolutin.setter
-    def resolutin(self, res):
-        self._data["resolutin"] = str(res)
+    @resolution.setter
+    def resolution(self, res):
+        self._data["resolution"] = str(res)
         self.save()
 
     @property
@@ -149,7 +149,6 @@ class Settings:
     # -- Workflow Properties --
     @property
     def working_mode(self):
-        # Default to HYBRID if missing
         return self._data.get("working_mode")
 
     @working_mode.setter
@@ -246,7 +245,7 @@ class Settings:
             print(f"Backup limit set to {value}")
             self.save()
         else:
-            print(f"Invalid value: {value}, value has to be a pozitive integer!")
+            print(f"Invalid value: {value}, value has to be a positive integer!")
 
     @property
     def backup_interval(self):

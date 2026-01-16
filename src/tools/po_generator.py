@@ -98,7 +98,7 @@ class PoGenerator:
                 # --- REDRAW HEADERS ---
                 self.canvas.setFont("Helvetica-Bold", 10)
                 self.canvas.drawString(self.col_qty, self.y, "QTY")
-                self.canvas.drawString(self.co_sku, self.y, "SKU")
+                self.canvas.drawString(self.col_sku, self.y, "SKU")
                 self.canvas.drawString(self.col_desc, self.y, "DESCRIPTION")
                 self.canvas.drawString(self.col_price, self.y, "UNIT PRICE")
                 self.canvas.drawString(self.col_total, self.y, "TOTAL")
@@ -143,7 +143,7 @@ class PoGenerator:
     def _po_table_gen(self):
         # Generate a fake catalog and take the descriptions
         items = catalog_gen()
-        descriptions = items.iloc[:, 2].tolist()  # The description
+        descriptions = items.iloc[:, 1].tolist()  # The description
 
         # Shrink the list
         count = min(len(descriptions), random.randint(4, 20))

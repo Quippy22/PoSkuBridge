@@ -29,7 +29,7 @@ def initialize_filesystem():
 
 
 def initialize_database():
-    log.info("Started filesystem initialization")
+    log.info("Started database initialization")
     conn = sqlite3.connect(settings.db_path)
     cursor = conn.cursor()
 
