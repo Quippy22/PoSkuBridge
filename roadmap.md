@@ -25,6 +25,7 @@
 **Goal:** Build the GUI container to visualize the data flow.
 - [x] **Main Window:** Setup `ttkbootstrap` Window with valid theme.
 - [x] **Tab 1 (Dashboard):** A "Process Log" text area + Buttons.
+- [x] **Settings:** A new window for changing the settings
 - [ ] **Tab 2 (Triage):** Empty TableView placeholder + "Commit" button (Disabled).
 - [x] **Wiring:** Connect to the backend
 

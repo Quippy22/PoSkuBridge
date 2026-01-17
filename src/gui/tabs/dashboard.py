@@ -1,5 +1,7 @@
 import ttkbootstrap as ttk
 
+from gui.options import SettingsWindow
+
 from core.logger import log
 from core.config import settings
 
@@ -231,7 +233,9 @@ class ControlPanel(ttk.Frame):
 
 
     def open_settings(self):
-        pass
+        settings_window = SettingsWindow(self)
+        # Prevent the user from clicking the main window
+        settings_window.grab_set()
 
 
 class Dashboard(ttk.Frame):

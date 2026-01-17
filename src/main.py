@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         print("Stress test complete")
 
-    threading.Thread(target=test, daemon=True).start()
+    #threading.Thread(target=test, daemon=True).start()
 
 
     gui.mainloop()
