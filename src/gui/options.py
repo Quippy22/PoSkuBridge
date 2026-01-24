@@ -2,7 +2,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.widgets.scrolled import ScrolledFrame
 
 from core.config import settings
-from gui.widgets import PathSelector, ToggleSetting, SliderSetting
+from gui.widgets import PathSelector, SliderSetting, ToggleSetting
 
 
 class UiSettings(ttk.Labelframe):
@@ -39,7 +39,10 @@ class UiSettings(ttk.Labelframe):
             row=1,
             column=0,
             sticky="w",
-            padx=(0, 10,)
+            padx=(
+                0,
+                10,
+            ),
         )
 
         self.var_theme = ttk.StringVar(value=settings.gui_theme)
@@ -91,19 +94,15 @@ class WorkflowSettings(ttk.Labelframe):
 
         # --- 1. Archive Files ---
         self.var_archive = ttk.BooleanVar(value=settings.archive_processed_files)
-        ToggleSetting(
-            self,
-            "Archive processed files",
-            self.var_archive
-        ).pack(fill="x", pady=5)
+        ToggleSetting(self, "Archive processed files", self.var_archive).pack(
+            fill="x", pady=5
+        )
 
         # --- 2. Open Output ---
         self.var_open = ttk.BooleanVar(value=settings.open_output_folder)
-        ToggleSetting(
-            self,
-            "Open output folder after completion",
-            self.var_open
-        ).pack(fill="x", pady=5)
+        ToggleSetting(self, "Open output folder after completion", self.var_open).pack(
+            fill="x", pady=5
+        )
 
 
 class MatcherSettings(ttk.Labelframe):
@@ -112,20 +111,17 @@ class MatcherSettings(ttk.Labelframe):
         # -- Fuzzy Match Switch --
         self.var_fuzzy = ttk.BooleanVar(value=settings.enable_fuzzy_match)
         ToggleSetting(
-            self, 
-            "Enable Fuzzy Matching", 
-            self.var_fuzzy,
-            color="primary"
+            self, "Enable Fuzzy Matching", self.var_fuzzy, color="primary"
         ).pack(fill="x", pady=5)
 
         # -- Threshold Slider ---
         self.var_threshold = ttk.DoubleVar(value=settings.fuzzy_threshold)
         SliderSetting(
-            self, 
-            label_text="Match Confidence Threshold", 
+            self,
+            label_text="Match Confidence Threshold",
             variable=self.var_threshold,
-            min_val=0.1, # 10%
-            max_val=0.9  # 90%
+            min_val=0.1,  # 10%
+            max_val=0.9,  # 90%
         ).pack(fill="x", pady=5)
 
 
@@ -137,32 +133,25 @@ class BackupSettings(ttk.Labelframe):
 class SettingsActions(ttk.Frame):
     def __init__(self, parent, on_save, on_apply, on_close):
         super().__init__(parent, padding=10)
-        
+
         # A visual separator line above the buttons
-        ttk.Separator(self, orient="horizontal").pack(side="top", fill="x", pady=(0, 10))
+        ttk.Separator(self, orient="horizontal").pack(
+            side="top", fill="x", pady=(0, 10)
+        )
 
         # Buttons to the right
         self.btn_close = ttk.Button(
-            self,
-            text="Close",
-            bootstyle="secondary",
-            command=on_close
+            self, text="Close", bootstyle="secondary", command=on_close
         )
         self.btn_close.pack(side="right", padx=5)
 
         self.btn_apply = ttk.Button(
-            self,
-            text="Apply",
-            bootstyle="info",
-            command=on_apply
+            self, text="Apply", bootstyle="info", command=on_apply
         )
         self.btn_apply.pack(side="right", padx=5)
-        
+
         self.btn_save = ttk.Button(
-            self,
-            text="Save",
-            bootstyle="success",
-            command=on_save
+            self, text="Save", bootstyle="success", command=on_save
         )
         self.btn_save.pack(side="right", padx=5)
 
@@ -171,27 +160,51 @@ class SettingsWindow(ttk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("Settings")
-        self.geometry("400x300")
+        self.geometry(settings.resolution)
         self.transient(parent)
         self.grab_set()
 
         # -- The Footer --
         # Fixed section
         self.footer = SettingsActions(
-                self,
-                on_save=self.save_settings,
-                on_apply=self.apply_settings,
-                on_close=self.destroy,
-            )
+            self,
+            on_save=self.save_settings,
+            on_apply=self.apply_settings,
+            on_close=self.destroy,
+        )
         self.footer.pack(side="bottom", fill="x")
 
-        # Scrollable section
-        self.scroll_container = ScrolledFrame(self, autohide=True)
-        self.scroll_container.pack(side="top", fill="both", expand=True)
-        
-        container = self.scroll_container.container
+        # -- The Body --
+        body = ttk.Frame(self)
+        body.pack(side="top", fill="both", expand=True)
+        self.canvas = ttk.Canvas(body, highlightthickness=0)
 
-        # -- The Content --
+        # The Scrollbar
+        self.scrollbar = ttk.Scrollbar(
+            body, orient="vertical", bootstyle="round", command=self.canvas.yview
+        )
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # The Scrollable Space
+        self.scrollable_frame = ttk.Frame(self.canvas, padding=10)
+        self.canvas_window = self.canvas.create_window(
+            (0, 0), window=self.scrollable_frame, anchor="nw"
+        )
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
+        )
+        self.canvas.bind(
+            "<Configure>",
+            lambda e: self.canvas.itemconfigure(self.canvas_window, width=e.width),
+        )
+        container = self.scrollable_frame
+
+        # The content
         self.ui_settings = UiSettings(container)
         self.path_settings = PathSettings(container)
         self.workflow_settings = WorkflowSettings(container)
