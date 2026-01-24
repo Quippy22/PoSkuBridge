@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from core.logger import log
 
 class Settings:
     DEFAULTS = {
@@ -56,7 +57,7 @@ class Settings:
                 return p.parent
 
         # If things fail, go back to the origins
-        print("Warning: Could not find 'src' folder. Falling back to relative path.")
+        log.warning("Could not find 'src' folder. Falling back to relative path.")
         return Path(__file__).resolve().parent.parent.parent
 
     def _ensure_internal_structure(self):
@@ -66,7 +67,7 @@ class Settings:
     def load(self):
         """Loads JSON and pushes values through the Setters"""
         if not self.config_path.exists():
-            print(f"No config found at {self.config_path}. Creating a new one")
+            log.warning(f"No config found at {self.config_path}. Creating a new one")
             self.save()
             return
 
@@ -77,9 +78,9 @@ class Settings:
             for key, value in loaded_data.items():
                 self._data[key] = value
 
-            print("Settings loaded.")
+            log.info("Settings loaded.")
         except Exception as e:
-            print(f"Config corrupt ({e}). Using defaults.")
+            log.error(f"Config corrupt ({e}). Using defaults.")
             self._data = self.DEFAULTS.copy()
             self.save()
 
@@ -88,7 +89,7 @@ class Settings:
             path = self.config_path
         with open(path, "w") as f:
             json.dump(self._data, f, indent=4)
-        print("Saving settings...")
+        log.info("Settings saved")
 
     # -- Path Properties --
     @property
@@ -164,7 +165,7 @@ class Settings:
             self._data["working_mode"] = val
             self.save()
         else:
-            print(f"❌ Invalid mode: '{value}'. Must be one of {valid_modes}")
+            log.error(f"Invalid mode: '{value}'. Must be one of {valid_modes}")
 
     @property
     def archive_processed_files(self):
@@ -226,7 +227,7 @@ class Settings:
             self.save()
 
         except ValueError:
-            print(f"Invalid threshold: {value}. Must be a number.")
+            log.error(f"Invalid threshold: {value}. Must be a number.")
 
     # -- Backup Properties --
     @property
@@ -238,14 +239,14 @@ class Settings:
         if value == 0:
             # None = no limit
             self._data["max_backups"] = None
-            print("Backup limit disabled")
+            log.info("Backup limit disabled")
             self.save()
         elif value > 0:
             self._data["max_backups"] = value
-            print(f"Backup limit set to {value}")
+            log.info(f"Backup limit set to {value}")
             self.save()
         else:
-            print(f"Invalid value: {value}, value has to be a positive integer!")
+            log.error(f"Invalid value: {value}, value has to be a positive integer!")
 
     @property
     def backup_interval(self):
@@ -256,7 +257,7 @@ class Settings:
         # 0 = Disabled
         if value == 0 or value == "0":
             self._data["backup_interval"] = 0
-            print("Automated backups: DISABLED")
+            log.info("Automated backups: DISABLED")
             return
 
         # Logic for strings (1d, 2w, etc.)
@@ -266,25 +267,23 @@ class Settings:
                 number = int(value[:-1])
 
                 if number < 1:
-                    print("Value must be positive")
+                    log.error("Value must be positive")
                     return
 
                 multipliers = {"h": 1, "d": 24, "w": 168}
 
                 if unit in multipliers:
                     self._data["backup_interval"] = number * multipliers[unit]
-                    print(
-                        f"Automated backups: Every {self._data.get("backup_interval")} hours ({value})"
-                    )
+                    log.info(f"Automated backups: Every{self._data.get("backup_interval")}hours ({value})")
                 else:
-                    print(f"Unknown unit '{unit}'. Use h, d, or w.")
+                    log.error(f"Unknown unit '{unit}'. Use h, d, or w.")
             except ValueError:
-                print(f"Invalid format '{value}'. Settings unchanged.")
+                log.error(f"Invalid format '{value}'. Settings unchanged.")
 
         # Logic for raw integers (Hours)
         elif isinstance(value, int) and value > 0:
             self._data["backup_interval"] = value
-            print(f"Automated backups: Every {value} hours")
+            log.info(f"Automated backups: Every {value} hours")
         self.save()
 
 
