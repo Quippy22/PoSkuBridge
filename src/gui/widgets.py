@@ -85,19 +85,22 @@ class SliderSetting(ttk.Frame):
             variable=variable, 
             from_=min_val, 
             to=max_val, 
-            command=self.update_text  # Trigger update when moved
+            command=self.snap_to_step
         )
         self.scale.pack(side="right", fill="x", expand=True, padx=10)
-        
-        # Initialize text immediately
-        self.update_text(self.variable.get())
 
-    def update_text(self, value):
-        # Convert string/float to percentage integer
-        # value comes in as a string from the Scale command
+    def snap_to_step(self, value):
+        """Forces the slider to snap to 0.1 increments"""
         try:
             float_val = float(value)
-            percent = int(float_val * 100)
+            snapped_val = round(float_val, 1)
+            
+            # Force the variable (and slider handle) to the snapped position
+            self.variable.set(snapped_val)
+            
+            # Update text
+            percent = int(snapped_val * 100)
             self.val_label.config(text=f"{percent}%")
+            
         except ValueError:
             pass
