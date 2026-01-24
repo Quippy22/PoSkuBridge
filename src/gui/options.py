@@ -1,5 +1,4 @@
 import ttkbootstrap as ttk
-from ttkbootstrap.widgets.scrolled import ScrolledFrame
 
 from core.config import settings
 from gui.widgets import PathSelector, SliderSetting, ToggleSetting
@@ -127,7 +126,97 @@ class MatcherSettings(ttk.Labelframe):
 
 class BackupSettings(ttk.Labelframe):
     def __init__(self, parent):
-        super().__init__(parent, text="Data & Backup")
+        super().__init__(parent, text="Data & Backup", padding=15)
+
+        # --- 1. Max Backups ---
+        # accessing global settings directly
+        self.var_max_backups = ttk.StringVar(value=str(settings.max_backups))
+
+        self.create_labeled_entry(
+            label_text="Maximum number of backups to keep",
+            variable=self.var_max_backups,
+            help_text="0 = No limit (keep all backups)",
+        )
+
+        ttk.Separator(self, orient="horizontal").pack(fill="x", pady=15)
+
+        # --- 2. Auto Backup Frequency ---
+        # Parse the global setting "5d" or "2w"
+        raw_interval = str(settings.backup_interval)
+
+        # Defaults
+        init_val = raw_interval
+        init_unit = "Hours"
+
+        if raw_interval.endswith("w"):
+            init_val = raw_interval[:-1]  # "5w" -> "5"
+            init_unit = "Weeks"
+        elif raw_interval.endswith("d"):
+            init_val = raw_interval[:-1]  # "5d" -> "5"
+            init_unit = "Days"
+
+        self.var_freq_val = ttk.StringVar(value=init_val)
+        self.var_freq_unit = ttk.StringVar(value=init_unit)
+
+        self.create_frequency_row(
+            label_text="Auto-backup frequency",
+            var_value=self.var_freq_val,
+            var_unit=self.var_freq_unit,
+            help_text="0 = Disabled (Manual backups only)",
+        )
+
+    def create_labeled_entry(self, label_text, variable, help_text):
+        container = ttk.Frame(self)
+        container.pack(fill="x", pady=5)
+
+        ttk.Label(container, text=label_text).pack(anchor="w")
+        ttk.Entry(container, textvariable=variable).pack(fill="x", pady=(5, 0))
+        ttk.Label(
+            container, text=help_text, bootstyle="secondary", font=("Segoe UI", 8)
+        ).pack(anchor="w", pady=(2, 0))
+
+    def create_frequency_row(self, label_text, var_value, var_unit, help_text):
+        container = ttk.Frame(self)
+        container.pack(fill="x", pady=5)
+
+        ttk.Label(container, text=label_text).pack(anchor="w")
+
+        row = ttk.Frame(container)
+        row.pack(fill="x", pady=(5, 0))
+
+        # Number Box
+        ttk.Entry(row, textvariable=var_value).pack(
+            side="left", fill="x", expand=True, padx=(0, 5)
+        )
+
+        # Unit Dropdown
+        dropdown = ttk.Combobox(
+            row,
+            textvariable=var_unit,
+            values=["Hours", "Days", "Weeks"],
+            width=10,
+            state="readonly",
+        )
+        dropdown.pack(side="right")
+
+        ttk.Label(
+            container, text=help_text, bootstyle="secondary", font=("Segoe UI", 8)
+        ).pack(anchor="w", pady=(2, 0))
+
+    # Use this helper in save_settings()
+    def get_interval_string(self):
+        val = self.var_freq_val.get().strip()
+        unit = self.var_freq_unit.get()
+
+        if not val or val == "0":
+            return "0"
+
+        if unit == "Weeks":
+            return f"{val}w"
+        elif unit == "Days":
+            return f"{val}d"
+        else:
+            return val
 
 
 class SettingsActions(ttk.Frame):
