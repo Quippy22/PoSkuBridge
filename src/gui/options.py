@@ -35,13 +35,7 @@ class UiSettings(ttk.Labelframe):
 
         # -- Theme --
         ttk.Label(self, text="GUI Theme:").grid(
-            row=1,
-            column=0,
-            sticky="w",
-            padx=(
-                0,
-                10,
-            ),
+            row=1, column=0, sticky="w", padx=(0, 10)
         )
 
         self.var_theme = ttk.StringVar(value=settings.gui_theme)
@@ -70,6 +64,19 @@ class UiSettings(ttk.Labelframe):
         )
         self.combo_theme.grid(row=1, column=1, sticky="ew", pady=5)
 
+    def save(self):
+        settings.resolution = self.var_res.get()
+        settings.gui_theme = self.var_theme.get()
+
+    def is_modified(self):
+        if self.var_res.get() != settings.resolution:
+            return True
+
+        if self.var_theme.get() != settings.gui_theme:
+            return True
+
+        return False
+
 
 class PathSettings(ttk.Labelframe):
     def __init__(self, parent):
@@ -86,22 +93,61 @@ class PathSettings(ttk.Labelframe):
         PathSelector(self, "Review Directory", self.var_review).pack(fill="x")
         PathSelector(self, "Archive Directory", self.var_archive).pack(fill="x")
 
+    def save(self):
+        settings.input_dir = self.var_input.get()
+        settings.output_dir = self.var_output.get()
+        settings.review_dir = self.var_review.get()
+        settings.archive_dir = self.var_archive.get()
+
+    def is_modified(self):
+        if settings.input_dir != self.var_input.get():
+            return True
+        if settings.output_dir != self.var_output.get():
+            return True
+        if settings.review_dir != self.var_review.get():
+            return True
+        if settings.archive_dir != self.var_archive.get():
+            return True
+
+        return False
+
 
 class WorkflowSettings(ttk.Labelframe):
     def __init__(self, parent):
         super().__init__(parent, text="General Behavior")
 
-        # --- 1. Archive Files ---
+        # -- Archive Files --
         self.var_archive = ttk.BooleanVar(value=settings.archive_processed_files)
         ToggleSetting(self, "Archive processed files", self.var_archive).pack(
             fill="x", pady=5
         )
 
-        # --- 2. Open Output ---
+        # -- Open Output --
         self.var_open = ttk.BooleanVar(value=settings.open_output_folder)
         ToggleSetting(self, "Open output folder after completion", self.var_open).pack(
             fill="x", pady=5
         )
+        
+        # -- Keep Working Mode --
+        self.var_keep_mode = ttk.BooleanVar(value=settings.keep_working_mode)
+        ToggleSetting(self, "Keep the working mode after application close", self.var_keep_mode).pack(
+            fill="x", pady=5
+        )
+
+    def save(self):
+        settings.archive_processed_files = self.var_archive.get()
+        settings.open_output_folder = self.var_open.get()
+        settings.keep_working_mode = self.var_keep_mode.get()
+
+    def is_modified(self):
+        if settings.archive_processed_files != self.var_archive.get():
+            return True
+        if settings.open_output_folder != self.var_open.get():
+            return True
+        if settings.keep_working_mode != self.var_keep_mode.get():
+            return True
+
+        return False
 
 
 class MatcherSettings(ttk.Labelframe):
@@ -110,7 +156,7 @@ class MatcherSettings(ttk.Labelframe):
         # -- Fuzzy Match Switch --
         self.var_fuzzy = ttk.BooleanVar(value=settings.enable_fuzzy_match)
         ToggleSetting(
-            self, "Enable Fuzzy Matching", self.var_fuzzy, color="primary"
+            self, "Enable Fuzzy Matching", self.var_fuzzy, color="success"
         ).pack(fill="x", pady=5)
 
         # -- Threshold Slider ---
@@ -123,16 +169,27 @@ class MatcherSettings(ttk.Labelframe):
             max_val=0.9,  # 90%
         ).pack(fill="x", pady=5)
 
+    def save(self):
+        settings.enable_fuzzy_match = self.var_fuzzy.get()
+        settings.fuzzy_threshold = self.var_threshold.get()
+
+    def is_modified(self):
+        if settings.enable_fuzzy_match != self.var_fuzzy.get():
+            return True
+        if settings.fuzzy_threshold != self.var_threshold.get():
+            return True
+
+        return False
+
 
 class BackupSettings(ttk.Labelframe):
     def __init__(self, parent):
         super().__init__(parent, text="Data & Backup", padding=15)
 
         # --- 1. Max Backups ---
-        # accessing global settings directly
-        self.var_max_backups = ttk.StringVar(value=str(settings.max_backups))
+        self.var_max_backups = ttk.IntVar(value=settings.max_backups)
 
-        self.create_labeled_entry(
+        self._create_labeled_entry(
             label_text="Maximum number of backups to keep",
             variable=self.var_max_backups,
             help_text="0 = No limit (keep all backups)",
@@ -141,31 +198,31 @@ class BackupSettings(ttk.Labelframe):
         ttk.Separator(self, orient="horizontal").pack(fill="x", pady=15)
 
         # --- 2. Auto Backup Frequency ---
-        # Parse the global setting "5d" or "2w"
-        raw_interval = str(settings.backup_interval)
+        self.var_freq_val = ttk.StringVar(value=str(settings.backup_interval))
+        self.var_freq_unit = ttk.StringVar(value="Hours")
 
-        # Defaults
-        init_val = raw_interval
-        init_unit = "Hours"
-
-        if raw_interval.endswith("w"):
-            init_val = raw_interval[:-1]  # "5w" -> "5"
-            init_unit = "Weeks"
-        elif raw_interval.endswith("d"):
-            init_val = raw_interval[:-1]  # "5d" -> "5"
-            init_unit = "Days"
-
-        self.var_freq_val = ttk.StringVar(value=init_val)
-        self.var_freq_unit = ttk.StringVar(value=init_unit)
-
-        self.create_frequency_row(
+        self._create_frequency_row(
             label_text="Auto-backup frequency",
             var_value=self.var_freq_val,
             var_unit=self.var_freq_unit,
             help_text="0 = Disabled (Manual backups only)",
         )
 
-    def create_labeled_entry(self, label_text, variable, help_text):
+    def save(self):
+        settings.max_backups = self.var_max_backups.get()
+        settings.backup_interval = (
+            self.var_freq_val.get() + self.var_freq_unit.get().lower()[0]
+        )
+
+    def is_modified(self):
+        if settings.max_backups != self.var_max_backups.get():
+            return True
+        if settings.backup_interval != self._get_interval_string():
+            return True
+
+        return False
+
+    def _create_labeled_entry(self, label_text, variable, help_text):
         container = ttk.Frame(self)
         container.pack(fill="x", pady=5)
 
@@ -175,7 +232,7 @@ class BackupSettings(ttk.Labelframe):
             container, text=help_text, bootstyle="secondary", font=("Segoe UI", 8)
         ).pack(anchor="w", pady=(2, 0))
 
-    def create_frequency_row(self, label_text, var_value, var_unit, help_text):
+    def _create_frequency_row(self, label_text, var_value, var_unit, help_text):
         container = ttk.Frame(self)
         container.pack(fill="x", pady=5)
 
@@ -203,20 +260,16 @@ class BackupSettings(ttk.Labelframe):
             container, text=help_text, bootstyle="secondary", font=("Segoe UI", 8)
         ).pack(anchor="w", pady=(2, 0))
 
-    # Use this helper in save_settings()
-    def get_interval_string(self):
+    def _get_interval_string(self):
+        """Translates the interval in hours for easier evalutaion"""
         val = self.var_freq_val.get().strip()
-        unit = self.var_freq_unit.get()
-
         if not val or val == "0":
-            return "0"
+            return 0
 
-        if unit == "Weeks":
-            return f"{val}w"
-        elif unit == "Days":
-            return f"{val}d"
-        else:
-            return val
+        unit = self.var_freq_unit.get().lower()
+        multipliers = {"hours": 1, "days": 24, "weeks": 168}
+
+        return int(val) * multipliers[unit]
 
 
 class SettingsActions(ttk.Frame):
@@ -300,19 +353,25 @@ class SettingsWindow(ttk.Toplevel):
         self.matcher_settings = MatcherSettings(container)
         self.backup_settings = BackupSettings(container)
 
+        self.modules = [
+            self.ui_settings,
+            self.path_settings,
+            self.workflow_settings,
+            self.matcher_settings,
+            self.backup_settings,
+        ]
+
         # Packs
-        self.ui_settings.pack(fill="x", padx=10, pady=10)
-        self.path_settings.pack(fill="x", padx=10, pady=10)
-        self.workflow_settings.pack(fill="x", padx=10, pady=10)
-        self.matcher_settings.pack(fill="x", padx=10, pady=10)
-        self.backup_settings.pack(fill="x", padx=10, pady=10)
+        for module in self.modules:
+            module.pack(fill="x", padx=10, pady=10)
 
     def save_settings(self):
         """Save changes and close"""
-        # Save
-
+        self.apply_settings()
         self.destroy()
 
     def apply_settings(self):
         """Apply the changes without closing"""
-        pass
+        for m in self.modules:
+            m.save()
+        settings.save()

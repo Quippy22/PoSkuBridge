@@ -12,7 +12,7 @@ from tools.wipe_data import nuke_environment
 
 if __name__ == "__main__":
     # For testing, wipe all the files before starting
-    nuke_environment()
+    # nuke_environment()
 
     backend = App()
     gui = GUI(backend)
@@ -21,7 +21,6 @@ if __name__ == "__main__":
     def test():
         """The stress test"""
         time.sleep(2)
-        print("System running. Press Ctrl+C to stop.")
 
         for i in range(10):
             # Create a fake PO

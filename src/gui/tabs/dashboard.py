@@ -134,8 +134,9 @@ class ModeSwitcher(ttk.Labelframe):
     def __init__(self, parent):
         super().__init__(parent, text="Operation Mode", bootstyle="primary")
 
-        self.mode = ttk.StringVar()
-        self.mode.set("off")
+        self.mode = ttk.StringVar(
+            value=settings.working_mode if settings.keep_working_mode else "off"
+        )
 
         self.off_btn = ttk.Radiobutton(
             self,
@@ -168,6 +169,7 @@ class ModeSwitcher(ttk.Labelframe):
 
     def update_backend(self):
         settings.working_mode = self.mode.get().lower()
+        settings.save()
         log.info(f"Working mode: {self.mode.get()}")
 
 

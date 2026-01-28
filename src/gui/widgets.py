@@ -76,7 +76,7 @@ class SliderSetting(ttk.Frame):
         
         # 2. Value Display (Right Edge) - "80%"
         # We save this as self.val_label so we can update it
-        self.val_label = ttk.Label(self, text="0%", width=4)
+        self.val_label = ttk.Label(self, text=self.variable.get(), width=4)
         self.val_label.pack(side="right", padx=(10, 0))
         
         # 3. Slider (Fill Remaining Space)
