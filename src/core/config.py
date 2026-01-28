@@ -3,6 +3,7 @@ from pathlib import Path
 
 from core.logger import log
 
+
 class Settings:
     DEFAULTS = {
         # --- GUI ---
@@ -93,63 +94,57 @@ class Settings:
 
     # -- Path Properties --
     @property
-    def input_dir(self):
+    def input_dir(self) -> Path:
         return Path(self._data["input_dir"])
 
     @input_dir.setter
     def input_dir(self, value):
         self._data["input_dir"] = str(value)
-        self.save()
 
     @property
-    def output_dir(self):
+    def output_dir(self) -> Path:
         return Path(self._data["output_dir"])
 
     @output_dir.setter
     def output_dir(self, value):
         self._data["output_dir"] = str(value)
-        self.save()
 
     @property
-    def review_dir(self):
+    def review_dir(self) -> Path:
         return Path(self._data["review_dir"])
 
     @review_dir.setter
     def review_dir(self, value):
         self._data["review_dir"] = str(value)
-        self.save()
 
     @property
-    def archive_dir(self):
+    def archive_dir(self) -> Path:
         return Path(self._data["archive_dir"])
 
     @archive_dir.setter
     def archive_dir(self, value):
         self._data["archive_dir"] = str(value)
-        self.save()
 
     # -- GUI Properties --
     @property
-    def resolution(self):
+    def resolution(self) -> str:
         return self._data.get("resolution")
 
     @resolution.setter
     def resolution(self, res):
         self._data["resolution"] = str(res)
-        self.save()
 
     @property
-    def gui_theme(self):
+    def gui_theme(self) -> str:
         return self._data.get("gui_theme")
 
     @gui_theme.setter
     def gui_theme(self, theme):
         self._data["gui_theme"] = theme
-        self.save()
 
     # -- Workflow Properties --
     @property
-    def working_mode(self):
+    def working_mode(self) -> str:
         return self._data.get("working_mode")
 
     @working_mode.setter
@@ -163,52 +158,47 @@ class Settings:
         # 3. Validate
         if val in valid_modes:
             self._data["working_mode"] = val
-            self.save()
         else:
             log.error(f"Invalid mode: '{value}'. Must be one of {valid_modes}")
 
     @property
-    def archive_processed_files(self):
+    def archive_processed_files(self) -> bool:
         # Default: True (Move files out of Input when done)
         return self._data.get("archive_processed_files", True)
 
     @archive_processed_files.setter
     def archive_processed_files(self, value):
         self._data["archive_processed_files"] = bool(value)
-        self.save()
 
     @property
-    def open_output_folder(self):
+    def open_output_folder(self) -> bool:
         # Default: False (Don't annoy user with popups)
         return self._data.get("open_output_folder", False)
 
     @open_output_folder.setter
     def open_output_folder(self, value):
         self._data["open_output_folder"] = bool(value)
-        self.save()
 
     @property
-    def keep_working_mode(self):
+    def keep_working_mode(self) -> bool:
         return self._data.get("keep_working_mode", False)
 
     @keep_working_mode.setter
     def keep_working_mode(self, value):
         self._data["keep_working_mode"] = bool(value)
-        self.save()
 
     # -- Matcher Properties --
     @property
-    def enable_fuzzy_match(self):
+    def enable_fuzzy_match(self) -> bool:
         # Master switch for the feature
         return self._data.get("enable_fuzzy_match", False)
 
     @enable_fuzzy_match.setter
     def enable_fuzzy_match(self, value):
         self._data["enable_fuzzy_match"] = bool(value)
-        self.save()
 
     @property
-    def fuzzy_threshold(self):
+    def fuzzy_threshold(self) -> float:
         # Default to 0.8 if missing
         return self._data.get("fuzzy_threshold", 0.8)
 
@@ -224,14 +214,13 @@ class Settings:
                 val = 0.9
 
             self._data["fuzzy_threshold"] = val
-            self.save()
 
         except ValueError:
             log.error(f"Invalid threshold: {value}. Must be a number.")
 
     # -- Backup Properties --
     @property
-    def max_backups(self):
+    def max_backups(self) -> int:
         return self._data.get("max_backups")
 
     @max_backups.setter
@@ -239,17 +228,13 @@ class Settings:
         if value == 0:
             # None = no limit
             self._data["max_backups"] = None
-            log.info("Backup limit disabled")
-            self.save()
         elif value > 0:
             self._data["max_backups"] = value
-            log.info(f"Backup limit set to {value}")
-            self.save()
         else:
             log.error(f"Invalid value: {value}, value has to be a positive integer!")
 
     @property
-    def backup_interval(self):
+    def backup_interval(self) -> int:
         return self._data.get("backup_interval")
 
     @backup_interval.setter
@@ -274,7 +259,6 @@ class Settings:
 
                 if unit in multipliers:
                     self._data["backup_interval"] = number * multipliers[unit]
-                    log.info(f"Automated backups: Every{self._data.get("backup_interval")}hours ({value})")
                 else:
                     log.error(f"Unknown unit '{unit}'. Use h, d, or w.")
             except ValueError:
@@ -283,8 +267,6 @@ class Settings:
         # Logic for raw integers (Hours)
         elif isinstance(value, int) and value > 0:
             self._data["backup_interval"] = value
-            log.info(f"Automated backups: Every {value} hours")
-        self.save()
 
 
 settings = Settings()
