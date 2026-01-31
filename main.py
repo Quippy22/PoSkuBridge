@@ -1,14 +1,12 @@
 import threading
 import time
 
-from core.app import App
-
-from gui.application import GUI
+from src.core.app import App
+from src.gui.application import GUI
 
 # Development tools
-from tools.po_generator import PoGenerator
-from tools.wipe_data import nuke_environment
-
+from src.tools.po_generator import PoGenerator
+from src.tools.wipe_data import nuke_environment
 
 if __name__ == "__main__":
     # For testing, wipe all the files before starting
@@ -16,7 +14,6 @@ if __name__ == "__main__":
 
     backend = App()
     gui = GUI(backend)
-
 
     def test():
         """The stress test"""
@@ -32,7 +29,6 @@ if __name__ == "__main__":
 
         print("Stress test complete")
 
-    #threading.Thread(target=test, daemon=True).start()
-
+    # threading.Thread(target=test, daemon=True).start()
 
     gui.mainloop()

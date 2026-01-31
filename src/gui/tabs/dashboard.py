@@ -1,9 +1,9 @@
 import ttkbootstrap as ttk
 
-from gui.options import SettingsWindow
+from src.gui.options import SettingsWindow
 
-from core.logger import log
-from core.config import settings
+from src.core.logger import log
+from src.core.config import settings
 
 
 class VisualLogger(ttk.Labelframe):

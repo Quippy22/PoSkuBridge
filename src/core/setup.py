@@ -1,8 +1,8 @@
 import os
 import sqlite3
 
-from core.config import settings 
-from core.logger import log
+from src.core.config import settings 
+from src.core.logger import log
 
 
 def initialize_filesystem():

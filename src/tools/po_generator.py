@@ -5,8 +5,8 @@ import textwrap
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-from core.config import settings
-from tools.catalog_generator import catalog_gen
+from src.core.config import settings
+from src.tools.catalog_generator import catalog_gen
 
 
 class PoGenerator:

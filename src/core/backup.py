@@ -1,8 +1,8 @@
 import shutil
 from datetime import datetime
 
-from core.config import settings
-from core.logger import log
+from src.core.config import settings
+from src.core.logger import log
 
 
 def backup(tag="auto"):

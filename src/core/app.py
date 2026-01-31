@@ -2,11 +2,11 @@ import queue
 import threading
 import time
 
-from core.backup import backup
-from core.config import settings
-from core.logger import log
-from core.pdf_parser import PdfParser
-from core.setup import initialize_database, initialize_filesystem
+from src.core.backup import backup
+from src.core.config import settings
+from src.core.logger import log
+from src.core.pdf_parser import PdfParser
+from src.core.setup import initialize_database, initialize_filesystem
 
 
 class App:
@@ -37,7 +37,7 @@ class App:
     def exit(self):
         self.log.info("Stopping system!")
         self.stop_event.set()
-        
+
         # If the worker is stuck waiting for a file
         try:
             self.file_queue.put(None)

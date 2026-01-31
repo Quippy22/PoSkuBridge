@@ -1,7 +1,7 @@
 import ttkbootstrap as ttk
 
-from core.config import settings
-from gui.widgets import PathSelector, SliderSetting, ToggleSetting
+from src.core.config import settings
+from src.gui.widgets import PathSelector, SliderSetting, ToggleSetting
 
 
 class UiSettings(ttk.Labelframe):

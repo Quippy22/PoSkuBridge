@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from core.logger import log
+from src.core.logger import log
 
 
 class Settings:
