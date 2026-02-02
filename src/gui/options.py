@@ -2,6 +2,7 @@ import ttkbootstrap as ttk
 
 from src.core.config import settings
 from src.gui.widgets import PathSelector, SliderSetting, ToggleSetting
+from src.lib.time import format_duration, parse_duration
 
 
 class UiSettings(ttk.Labelframe):
@@ -127,12 +128,12 @@ class WorkflowSettings(ttk.Labelframe):
         ToggleSetting(self, "Open output folder after completion", self.var_open).pack(
             fill="x", pady=5
         )
-        
+
         # -- Keep Working Mode --
         self.var_keep_mode = ttk.BooleanVar(value=settings.keep_working_mode)
-        ToggleSetting(self, "Keep the working mode after application close", self.var_keep_mode).pack(
-            fill="x", pady=5
-        )
+        ToggleSetting(
+            self, "Keep the working mode after application close", self.var_keep_mode
+        ).pack(fill="x", pady=5)
 
     def save(self):
         settings.archive_processed_files = self.var_archive.get()
@@ -198,8 +199,13 @@ class BackupSettings(ttk.Labelframe):
         ttk.Separator(self, orient="horizontal").pack(fill="x", pady=15)
 
         # --- 2. Auto Backup Frequency ---
-        self.var_freq_val = ttk.StringVar(value=str(settings.backup_interval))
-        self.var_freq_unit = ttk.StringVar(value="Hours")
+        # Get the interval in hours
+        raw_interval = format_duration(settings.backup_interval)
+        # The number
+        self.var_freq_val = ttk.StringVar(value=raw_interval[:-1])
+        # Map the char back to full word
+        unit_map = {"h": "Hours", "d": "Days", "w": "Weeks"}
+        self.var_freq_unit = ttk.StringVar(value=unit_map[raw_interval[-1]])
 
         self._create_frequency_row(
             label_text="Auto-backup frequency",
@@ -210,14 +216,17 @@ class BackupSettings(ttk.Labelframe):
 
     def save(self):
         settings.max_backups = self.var_max_backups.get()
-        settings.backup_interval = (
-            self.var_freq_val.get() + self.var_freq_unit.get().lower()[0]
-        )
+
+        val = self.var_freq_val.get()
+        unit = self.var_freq_unit.get()
+        settings.backup_interval = f"{val}{unit}"
 
     def is_modified(self):
         if settings.max_backups != self.var_max_backups.get():
             return True
-        if settings.backup_interval != self._get_interval_string():
+        val = self.var_freq_val.get()
+        unit = self.var_freq_unit.get().lower()[0]
+        if settings.backup_interval != parse_duration(f"{val}{unit}"):
             return True
 
         return False
@@ -259,17 +268,6 @@ class BackupSettings(ttk.Labelframe):
         ttk.Label(
             container, text=help_text, bootstyle="secondary", font=("Segoe UI", 8)
         ).pack(anchor="w", pady=(2, 0))
-
-    def _get_interval_string(self):
-        """Translates the interval in hours for easier evalutaion"""
-        val = self.var_freq_val.get().strip()
-        if not val or val == "0":
-            return 0
-
-        unit = self.var_freq_unit.get().lower()
-        multipliers = {"hours": 1, "days": 24, "weeks": 168}
-
-        return int(val) * multipliers[unit]
 
 
 class SettingsActions(ttk.Frame):

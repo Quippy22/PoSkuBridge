@@ -4,6 +4,7 @@ import pandas as pd
 
 from src.core.config import settings
 from src.core.logger import log
+from src.lib.text import extract_keywords
 
 
 class Database:
@@ -11,9 +12,11 @@ class Database:
         self.path = settings.db_path
         self._initialize()
 
-    def add_product(self, warehouse_code, description, keywords):
+    def add_product(self, warehouse_code, description):
         """Adds a new item to the products list AND initializes the mapping row."""
         conn = self._get_connection()
+        # Extract the keywords
+        keywords = extract_keywords(description)
         try:
             cursor = conn.cursor()
 

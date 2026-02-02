@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from src.lib.time import parse_duration
 from src.core.logger import log
 
 
@@ -239,34 +240,23 @@ class Settings:
 
     @backup_interval.setter
     def backup_interval(self, value):
-        # 0 = Disabled
-        if value == 0 or value == "0":
-            self._data["backup_interval"] = 0
-            log.info("Automated backups: DISABLED")
-            return
-
-        # Logic for strings (1d, 2w, etc.)
+        """Accepts strings like '4w', '2d', '1'. 0 = Disabled"""
         if isinstance(value, str):
-            unit = value[-1].lower()
-            try:
-                number = int(value[:-1])
+            hours = parse_duration(value)
+            # Invalid format, don't change the value
+            if hours is None:
+                log.error(f"Invalid time format. The backup interval cannot be {value}")
+                return
+        else:
+            hours = value
+            if hours < 0:
+                log.error("Backup interval cannot be negative.")
+                return
 
-                if number < 1:
-                    log.error("Value must be positive")
-                    return
+        if hours == 0:
+            log.info("Automated backup disabled")
 
-                multipliers = {"h": 1, "d": 24, "w": 168}
-
-                if unit in multipliers:
-                    self._data["backup_interval"] = number * multipliers[unit]
-                else:
-                    log.error(f"Unknown unit '{unit}'. Use h, d, or w.")
-            except ValueError:
-                log.error(f"Invalid format '{value}'. Settings unchanged.")
-
-        # Logic for raw integers (Hours)
-        elif isinstance(value, int) and value > 0:
-            self._data["backup_interval"] = value
+        self._data["backup_interval"] = hours
 
 
 settings = Settings()

@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
         # No need to use backend.db, just use 'db' directly
         print("Step 1: Creating Product...")
-        db.add_product("WH-100", "Global Singleton Bolt", "bolt singleton")
+        db.add_product("WH-100", "Global Singleton Bolt")
 
         print("Step 2: Mapping New Supplier...")
         db.add_mapping("GlobalCo", "G-1", "WH-100")

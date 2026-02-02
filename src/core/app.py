@@ -106,8 +106,19 @@ class App:
     def archivist_loop(self):
         self.log.info("THREAD: Archivist is active")
         while not self.stop_event.is_set():
-            if self.stop_event.wait(timeout=settings.backup_interval * 3600):
+            interval = settings.backup_interval
+            
+            # Disabled state
+            if interval <= 0:
+                # Wait 60 seconds to see if settings change or app stops
+                self.stop_event.wait(timeout=60)
+                continue
+            
+            seconds = settings.backup_interval * 3600
+            # Wait for the interval or for the app to stop
+            if self.stop_event.wait(timeout=seconds):
                 break
+
             backup("AUTO")
 
         self.log.info("Archivist: Stopped")

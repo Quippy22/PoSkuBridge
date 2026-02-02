@@ -38,7 +38,7 @@
 - [x] **Product vs. Mapping:**
     - Implement `add_product` (Creates clean master data + keywords).
     - Implement `add_mapping` (Links messy supplier SKU to master data).
-- [ ] **Keyword Utility:** Implement consistent sanitation.
+- [x] **Keyword Utility:** Implement consistent sanitation.
 
 ---
 
