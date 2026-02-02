@@ -1,7 +1,7 @@
 import os
 import sqlite3
 
-from src.core.config import settings 
+from src.core.config import settings
 from src.core.logger import log
 
 
@@ -26,38 +26,3 @@ def initialize_filesystem():
         os.makedirs(f, exist_ok=True)
 
     log.info("File system initialized")
-
-
-def initialize_database():
-    log.info("Started database initialization")
-    conn = sqlite3.connect(settings.db_path)
-    cursor = conn.cursor()
-
-    cursor.execute("PRAGMA foreign_keys = ON;")
-
-    products_sql = """
-    CREATE TABLE IF NOT EXISTS products (
-        warehouse_code TEXT PRIMARY KEY,
-        description TEXT,
-        keywords TEXT
-    );
-    """
-
-    mappings_sql = """
-    CREATE TABLE IF NOT EXISTS mappings (
-        warehouse_code TEXT,
-
-        FOREIGN KEY(warehouse_code) REFERENCES products(warehouse_code)
-            ON UPDATE CASCADE
-            ON DELETE CASCADE
-    );
-    """
-
-    try:
-        cursor.execute(products_sql)
-        cursor.execute(mappings_sql)
-        log.info("Database initialized")
-    except Exception as e:
-        log.error(f"Database failed, error: {e}")
-    finally:
-        conn.close()

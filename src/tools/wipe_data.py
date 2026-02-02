@@ -6,26 +6,28 @@ from src.core.config import settings
 
 
 def nuke_environment():
+    # Define paths to destroy
+    targets = [
+        settings.backup_path,
+        settings.logs_path,
+        settings.db_path,
+        settings.config_path,
+        settings.internal_dir,
+        settings.input_dir,
+        settings.output_dir,
+        settings.archive_dir,
+        settings.review_dir,
+        settings.root / "Data",
+    ]
+
+    print("⚠️  Starting Environment Nuke...")
+    for t in targets:
+        print(f"{t} \n")
+
     confirm = input("This will delete all data and databases. Are you sure? (y/n): ")
     if confirm.lower() != "y":
         print("Nuke aborted.")
         return
-
-    # Define paths to destroy
-    targets = [
-            settings.backup_path,
-            settings.logs_path,
-            settings.db_path,
-            settings.config_path,
-            settings.internal_dir,
-            settings.input_dir,
-            settings.output_dir,
-            settings.archive_dir,
-            settings.review_dir,
-            settings.root / "Data"
-    ]
-
-    print("⚠️  Starting Environment Nuke...")
 
     for target in targets:
         path = Path(target)

@@ -6,14 +6,13 @@ from src.core.backup import backup
 from src.core.config import settings
 from src.core.logger import log
 from src.core.pdf_parser import PdfParser
-from src.core.setup import initialize_database, initialize_filesystem
+from src.core.setup import initialize_filesystem
 
 
 class App:
     def __init__(self):
         # -- Infrastructure Setup --
         initialize_filesystem()
-        initialize_database()
 
         # -- Shared Resources --
         self.log = log

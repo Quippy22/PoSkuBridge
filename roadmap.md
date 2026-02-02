@@ -33,9 +33,9 @@
 
 ## Phase 4: Database Interface & Logic (The "Memory")
 **Goal:** Implement the "Wide Table" logic and Separation of Concerns in Python.
-- [ ] **Database Class:** Create the thread-safe way to handle connections.
-- [ ] **Dynamic Columns:** Ensure new suppliers are added to the (Wide-Table pattern).
-- [ ] **Product vs. Mapping:**
+- [x] **Database Class:** Create the thread-safe way to handle connections.
+- [x] **Dynamic Columns:** Ensure new suppliers are added to the (Wide-Table pattern).
+- [x] **Product vs. Mapping:**
     - Implement `add_product` (Creates clean master data + keywords).
     - Implement `add_mapping` (Links messy supplier SKU to master data).
 - [ ] **Keyword Utility:** Implement consistent sanitation.
