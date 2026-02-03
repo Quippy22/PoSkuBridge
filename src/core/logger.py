@@ -1,41 +1,79 @@
 import queue
-from datetime import datetime
-from queue import Queue
+from contextlib import contextmanager
+
+from loguru import logger
+
+from src.core.config import settings
+
+# The queue for the GUI to read from
+log_queue = queue.Queue()
 
 
-class AppLogger:
-    def __init__(self):
-        self._queue = Queue()
+def indent_patcher(record):
+    """Checks if 'indent' is set. If True adds '> ' to the message"""
+    if record["extra"].get("indent"):
+        record["message"] = f"> {record['message']}"
 
-    def _add(self, level, message):
-        """Internal helper to compose the packet with time and level"""
-        now = datetime.now().strftime("[%H:%M:%S]")
 
-        log_packet = {
-            "time": now,
-            "level": level,
-            "msg": message,
-        }
+def gui_sink(message):
+    """Formats the log packet for the GUI"""
+    record = message.record
 
-        self._queue.put(log_packet)
+    if record["extra"].get("visual") is False:
+        return
 
-    def info(self, message):
-        self._add("INFO", message)
+    log_packet = {
+        "time": record["time"].strftime("%H:%M:%S"),
+        "level": record["level"].name.upper(),
+        "msg": record["message"],
+    }
 
-    def warning(self, message):
-        self._add("WARNING", message)
+    log_queue.put(log_packet)
 
-    def error(self, message):
-        self._add("ERROR", message)
 
-    def has_messages(self):
-        return not self._queue.empty()
+def setup_logging():
+    logger.remove()
 
-    def get_next_message(self):
+    # Apply the patcher
+    logger.configure(patcher=indent_patcher)
+
+    # 1. File logger
+    log_dir = settings.logs_path
+    file_name = log_dir / "{time:YYYY-MM-DD_HH-mm-ss}.log"
+    logger.add(
+        str(file_name),
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
+        rotation="10 MB",
+        retention="1 week",
+        level="DEBUG",
+        enqueue=True,
+    )
+
+    # 2. UI logger
+    logger.add(gui_sink, level="INFO", enqueue=True)
+
+
+# Gui helper
+def get_next_log():
+    try:
+        return log_queue.get_nowait()
+    except queue.Empty:
+        return None
+
+
+@contextmanager
+def tast_scope(task_name):
+    """
+    Creates a visual "chunk" in the logs.
+    All logs inside the scope will be indented.
+    """
+    logger.info(f"Task started: {task_name}")
+
+    # contextualize
+    with logger.contextualize(indent=True):
         try:
-            return self._queue.get_nowait()
-        except queue.Empty:
-            return None
+            yield
+        except Exception as e:
+            logger.error(f"Task {task_name} failed: {e}")
 
-
-log = AppLogger()
+    logger.info("Task completed: {task_name}")
