@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
 
+from loguru import logger
+
 from src.lib.time import parse_duration
-from src.core.logger import log
 
 
 class Settings:
@@ -59,7 +60,7 @@ class Settings:
                 return p.parent
 
         # If things fail, go back to the origins
-        log.warning("Could not find 'src' folder. Falling back to relative path.")
+        logger.warning("Could not find 'src' folder. Falling back to relative path.")
         return Path(__file__).resolve().parent.parent.parent
 
     def _ensure_internal_structure(self):
@@ -69,7 +70,7 @@ class Settings:
     def load(self):
         """Loads JSON and pushes values through the Setters"""
         if not self.config_path.exists():
-            log.warning(f"No config found at {self.config_path}. Creating a new one")
+            logger.warning(f"No config found at {self.config_path}. Creating a new one")
             self.save()
             return
 
@@ -80,9 +81,9 @@ class Settings:
             for key, value in loaded_data.items():
                 self._data[key] = value
 
-            log.info("Settings loaded.")
+            logger.info("Settings loaded.")
         except Exception as e:
-            log.error(f"Config corrupt ({e}). Using defaults.")
+            logger.error(f"Config corrupt ({e}). Using defaults.")
             self._data = self.DEFAULTS.copy()
             self.save()
 
@@ -91,7 +92,7 @@ class Settings:
             path = self.config_path
         with open(path, "w") as f:
             json.dump(self._data, f, indent=4)
-        log.info("Settings saved")
+        logger.info("Settings saved")
 
     # -- Path Properties --
     @property
@@ -160,7 +161,7 @@ class Settings:
         if val in valid_modes:
             self._data["working_mode"] = val
         else:
-            log.error(f"Invalid mode: '{value}'. Must be one of {valid_modes}")
+            logger.error(f"Invalid mode: '{value}'. Must be one of {valid_modes}")
 
     @property
     def archive_processed_files(self) -> bool:
@@ -217,7 +218,7 @@ class Settings:
             self._data["fuzzy_threshold"] = val
 
         except ValueError:
-            log.error(f"Invalid threshold: {value}. Must be a number.")
+            logger.error(f"Invalid threshold: {value}. Must be a number.")
 
     # -- Backup Properties --
     @property
@@ -232,7 +233,7 @@ class Settings:
         elif value > 0:
             self._data["max_backups"] = value
         else:
-            log.error(f"Invalid value: {value}, value has to be a positive integer!")
+            logger.error(f"Invalid value: {value}, value has to be a positive integer!")
 
     @property
     def backup_interval(self) -> int:
@@ -245,16 +246,16 @@ class Settings:
             hours = parse_duration(value)
             # Invalid format, don't change the value
             if hours is None:
-                log.error(f"Invalid time format. The backup interval cannot be {value}")
+                logger.error(f"Invalid time format. The backup interval cannot be {value}")
                 return
         else:
             hours = value
             if hours < 0:
-                log.error("Backup interval cannot be negative.")
+                logger.error("Backup interval cannot be negative.")
                 return
 
         if hours == 0:
-            log.info("Automated backup disabled")
+            logger.info("Automated backup disabled")
 
         self._data["backup_interval"] = hours
 

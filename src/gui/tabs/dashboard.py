@@ -1,8 +1,10 @@
 import ttkbootstrap as ttk
 
+from loguru import logger
+
 from src.gui.options import SettingsWindow
 
-from src.core.logger import log
+from src.core.logger import get_next_log
 from src.core.config import settings
 
 
@@ -37,25 +39,30 @@ class VisualLogger(ttk.Labelframe):
 
     def pull_log(self):
         """Check the log for new messages"""
-        while log.has_messages():
-            packet = log.get_next_message()
+        while True:
+            packet = get_next_log()
+            
+            # Queue is empty
+            if packet is None:
+                break
+
             self.append_message(packet)
 
         self.after(100, self.pull_log)
 
     def append_message(self, packet):
         """Formats and inserts the message with conditional headers."""
-        timestamp = packet.get("time")
-        level = packet.get("level", "INFO")
-        msg = packet.get("msg", "")
+        timestamp = packet["time"]
+        level = packet["level"]
+        msg = packet["msg"]
 
         # Show Level only if it's not 'INFO'
         if level == "INFO":
             # Format: [09:00:00] Found new file
-            log_text = f"{timestamp} {msg}\n"
+            log_text = f"[{timestamp}] {msg}\n"
         else:
             # Format: [09:00:00] ERROR: Worker crashed
-            log_text = f"{timestamp} {level}: {msg}\n"
+            log_text = f"[{timestamp}] {level}: {msg}\n"
 
         # 1. Unlock
         self.log_box.config(state="normal")
@@ -122,7 +129,7 @@ class QueueStatus(ttk.Labelframe):
             self.remaining.configure(text=str(remaining_count))
 
         except Exception as e:
-            log.error(f"Remaining counter: {e}")
+            logger.error(f"Remaining counter: {e}")
         
         # Loop the check
         self.after(200, self.update_remaining)
@@ -169,8 +176,9 @@ class ModeSwitcher(ttk.Labelframe):
 
     def update_backend(self):
         settings.working_mode = self.mode.get().lower()
-        settings.save()
-        log.info(f"Working mode: {self.mode.get()}")
+        if settings.keep_working_mode:
+            settings.save()
+        logger.info(f"Working mode: {self.mode.get()}")
 
 
 class StatusBar(ttk.Labelframe):

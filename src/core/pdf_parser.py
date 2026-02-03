@@ -2,9 +2,10 @@ import re
 
 import pandas as pd
 import pdfplumber
+from loguru import logger
 
 from src.core.config import settings
-from src.core.logger import log
+from src.core.logger import task_scope
 
 
 class PdfParser:
@@ -20,31 +21,30 @@ class PdfParser:
         self.po_table = None
 
     def run(self) -> tuple[str | None, pd.DataFrame | None]:
-        log.info(f"Parsing {self.file_path.name}")
-        # Open the file
-        self._pdf_opener(str(self.file_path))
-        if self.pdf is None:
-            return None, None
-        # Search for supplier
-        self._obtain_supplier()
-        # Get the table
-        self._extract_table()
-        if self.po_table is None:
-            log.error("Could not detect table")
-            return self.supplier, None
+        with task_scope(f"Parsing {self.file_path.name}"):
+            # Open the file
+            self._pdf_opener(str(self.file_path))
+            if self.pdf is None:
+                return None, None
+            # Search for supplier
+            self._obtain_supplier()
+            # Get the table
+            self._extract_table()
+            if self.po_table is None:
+                logger.error("Could not detect table")
+                return self.supplier, None
 
-        # If the table isn't empty, clean the data
-        self._clean_table()
+            # If the table isn't empty, clean the data
+            self._clean_table()
 
-        # Return the supplier and table as a tuple
-        log.info("File parsed")
-        return self.supplier, self.po_table
+            # Return the supplier and table as a tuple
+            return self.supplier, self.po_table
 
     def _pdf_opener(self, file_path):
         try:
             self.pdf = pdfplumber.open(file_path)
         except Exception as e:
-            log.error(f"Couldn't open file {file_path},error: {e}")
+            logger.error(f"Couldn't open file {file_path},error: {e}")
             return
 
         self.pages = self.pdf.pages
@@ -53,7 +53,7 @@ class PdfParser:
 
     def _obtain_supplier(self):
         """Looks for supplier, vendor etc at the top of the first page"""
-        log.info("> Obtaining supplier")
+        logger.info("Obtaining supplier")
         # look into the top 20% of the page (header)
         page = self.pages[0].crop((0, 0, self.page_width, self.page_height * 0.2))
 
@@ -87,7 +87,7 @@ class PdfParser:
         1. Tries to find a specific Grid.
         2. If no grid, assumes whitespace structure.
         """
-        log.info("> Extracting items")
+        logger.info("Extracting items")
         full_table = []
         for page in self.pages:
             # Remove the header
@@ -167,7 +167,6 @@ class PdfParser:
     def _clean_table(self):
         if self.po_table.empty:
             return
-
 
         # 1. Standardize headers
         self.po_table.columns = (

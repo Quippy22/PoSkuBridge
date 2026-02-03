@@ -1,28 +1,33 @@
 import os
 import sqlite3
 
+from loguru import logger
+
 from src.core.config import settings
-from src.core.logger import log
+from src.core.logger import task_scope
 
 
 def initialize_filesystem():
-    log.info("Started filesystem initialization")
-    # Setup the internal folder
-    internal = [
-        settings.backup_path,
-        settings.logs_path,
-    ]
-    for f in internal:
-        os.makedirs(f, exist_ok=True)
+    with task_scope("Filesystem Initialization"):
+        
+        # 1. Setup Internal Folders
+        internal = [
+            settings.backup_path,
+            settings.logs_path, 
+        ]
+        
+        for f in internal:
+            os.makedirs(f, exist_ok=True)
+            logger.info(f"Checked internal directory: {f}")
 
-    # Setup 'Data/' if it doesn't exist
-    data = [
-        settings.input_dir,
-        settings.output_dir,
-        settings.review_dir,
-        settings.archive_dir,
-    ]
-    for f in data:
-        os.makedirs(f, exist_ok=True)
-
-    log.info("File system initialized")
+        # 2. Setup Data Folders
+        data = [
+            settings.input_dir,
+            settings.output_dir,
+            settings.review_dir,
+            settings.archive_dir,
+        ]
+        
+        for f in data:
+            os.makedirs(f, exist_ok=True)
+            logger.info(f"Checked data directory: {f}")

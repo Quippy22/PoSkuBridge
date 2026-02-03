@@ -62,7 +62,7 @@ def get_next_log():
 
 
 @contextmanager
-def tast_scope(task_name):
+def task_scope(task_name):
     """
     Creates a visual "chunk" in the logs.
     All logs inside the scope will be indented.
@@ -76,4 +76,4 @@ def tast_scope(task_name):
         except Exception as e:
             logger.error(f"Task {task_name} failed: {e}")
 
-    logger.info("Task completed: {task_name}")
+    logger.info(f"Task completed: {task_name}")

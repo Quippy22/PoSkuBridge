@@ -44,12 +44,12 @@
 
 ## Phase 5: Logging Infrastructure (The "Black Box")
 **Goal:** Implement robust, thread-safe system logging with "Silent" capability and crash protection.
-- [ ] **Loguru Core & File Sink:** Configure the primary `logger.add()` for file storage with rotation (e.g., 10 MB) and retention.
-- [ ] **Secondary/Silent logs** Establish the pattern using `logger.bind(visual=False)`.
-- [ ] **Thread-Safe UI Sink:** Create a custom sink function (or class) that pushes logs to the GUI Dashboard.
+- [x] **Loguru Core & File Sink:** Configure the primary `logger.add()` for file storage with rotation (e.g., 10 MB) and retention.
+- [x] **Secondary/Silent logs** Establish the pattern using `logger.bind(visual=False)`.
+- [x] **Thread-Safe UI Sink:** Create a custom sink function (or class) that pushes logs to the GUI Dashboard.
     * *Constraint:* Must include a **Filter** to ignore logs bound with `visual=False`.
     * *Mechanism:* Use a `queue.Queue` inside the sink to pass messages from background threads to the Tkinter main loop safely.
-- [ ] **Crash Immunity:** Wrap critical entry points with the `@logger.catch` decorator to capture full stack traces of unhandled exceptions.
+- [x] **Crash Immunity:** Wrap critical entry points with the `@logger.catch` decorator to capture full stack traces of unhandled exceptions.
 ---
 
 ## Phase 6: The Matcher Logic (The "Brain")

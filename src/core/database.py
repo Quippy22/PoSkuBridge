@@ -1,9 +1,9 @@
 import sqlite3
 
 import pandas as pd
+from loguru import logger
 
 from src.core.config import settings
-from src.core.logger import log
 from src.lib.text import extract_keywords
 
 
@@ -35,12 +35,12 @@ class Database:
             )
 
             conn.commit()
-            log.info(f"Added product: {description}")
+            logger.info(f"Added product: {description}")
 
         except sqlite3.IntegrityError:
-            log.warning(f"Product {warehouse_code} already exists")
+            logger.warning(f"Product {warehouse_code} already exists")
         except Exception as e:
-            log.error(f"Failed to add product: {e}")
+            logger.error(f"Failed to add product: {e}")
         finally:
             conn.close()
 
@@ -56,13 +56,13 @@ class Database:
             cursor.execute(query, (supplier_sku, warehouse_code))
 
             if cursor.rowcount == 0:
-                log.error(f"Cannot map to {warehouse_code}: Product not found.")
+                logger.error(f"Cannot map to {warehouse_code}: Product not found.")
             else:
                 conn.commit()
-                log.info(f"Mapped {supplier_name} [{supplier_sku}] -> {warehouse_code}")
+                logger.info(f"Mapped {supplier_name} [{supplier_sku}] -> {warehouse_code}")
 
         except Exception as e:
-            log.error(f"Mapping save failed: {e}")
+            logger.error(f"Mapping save failed: {e}")
         finally:
             conn.close()
 
@@ -114,11 +114,11 @@ class Database:
         # Check against raw name
         if supplier not in existing_cols:
             try:
-                log.info(f"New supplier: {supplier}, adding column...")
+                logger.info(f"New supplier: {supplier}, adding column...")
                 cursor.execute(f"ALTER TABLE mappings ADD COLUMN {col_name} TEXT")
                 conn.commit()
             except Exception as e:
-                log.error(f"Failed to add supplier column: {e}")
+                logger.error(f"Failed to add supplier column: {e}")
 
         conn.close()
         return col_name
@@ -131,7 +131,7 @@ class Database:
             conn.row_factory = sqlite3.Row
             return conn
         except Exception as e:
-            log.error(f"Database connection failed: {e}")
+            logger.error(f"Database connection failed: {e}")
             raise e
 
     def _initialize(self):
@@ -158,7 +158,7 @@ class Database:
         cursor.execute(products_sql)
         cursor.execute(mappings_sql)
         conn.commit()
-        log.info("Database initialized")
+        logger.info("Database initialized")
         conn.close()
 
 
