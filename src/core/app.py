@@ -5,17 +5,13 @@ import time
 from loguru import logger
 
 from src.core.backup import backup
-from src.core.config import settings
+from src.core.settings import settings
 from src.core.logger import task_scope
 from src.core.pdf_parser import PdfParser
-from src.core.setup import initialize_filesystem
 
 
 class App:
     def __init__(self):
-        # -- Infrastructure Setup --
-        initialize_filesystem()
-
         # -- Shared Resources --
         # The file queue
         self.file_queue = queue.Queue()
@@ -98,8 +94,8 @@ class App:
                     # Wait for human confirmation
                     pass
 
-                print(supplier)
-                print(items)
+                # print(supplier)
+                # print(items)
 
             except Exception as e:
                 logger.error(f"Worker: {e}")

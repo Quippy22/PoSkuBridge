@@ -3,7 +3,7 @@ from datetime import datetime
 
 from loguru import logger
 
-from src.core.config import settings
+from src.core.settings import settings
 from src.core.logger import task_scope
 
 

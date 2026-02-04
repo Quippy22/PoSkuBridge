@@ -104,9 +104,8 @@ def item_data_gen():
     ]
 
     description = " ".join(words)
-    keywords = ", ".join([p.lower() for p in words])
 
-    return description, keywords
+    return description
 
 
 def catalog_gen():
@@ -114,7 +113,7 @@ def catalog_gen():
     rows = []
 
     # 1. Define the headers
-    headers = ['Warehouse Code', 'Description', 'Keywords']
+    headers = ['Warehouse Code', 'Description']
 
     # 2. Populate the list
     for i in range(random.randint(100, 900)):
@@ -124,12 +123,11 @@ def catalog_gen():
             code = wh_code_gen()
         used_codes.add(code)
 
-        desc, keys = item_data_gen()
+        desc = item_data_gen()
 
         row = {
             'Warehouse Code': code,
             'Description': desc,
-            'Keywords': keys,
         }
 
         rows.append(row)

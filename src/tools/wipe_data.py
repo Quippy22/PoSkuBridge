@@ -2,7 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
-from src.core.config import settings
+from src.core.settings import settings
 
 
 def nuke_environment():

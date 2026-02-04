@@ -3,8 +3,7 @@ import sqlite3
 import pandas as pd
 from loguru import logger
 
-from src.core.config import settings
-from src.lib.text import extract_keywords
+from src.core.settings import settings
 
 
 class Database:
@@ -15,18 +14,16 @@ class Database:
     def add_product(self, warehouse_code, description):
         """Adds a new item to the products list AND initializes the mapping row."""
         conn = self._get_connection()
-        # Extract the keywords
-        keywords = extract_keywords(description)
         try:
             cursor = conn.cursor()
 
             # Append the products table
             cursor.execute(
                 """
-                INSERT INTO products (warehouse_code, description, keywords)
+                INSERT INTO products (warehouse_code, description)
                 VALUES (?, ?, ?)
             """,
-                (warehouse_code, description, keywords),
+                (warehouse_code, description),
             )
 
             # Append the mappings table
@@ -81,11 +78,11 @@ class Database:
         finally:
             conn.close()
 
-    def get_keywords_map(self) -> pd.DataFrame:
-        """Returns keywords for fuzzy matching."""
+    def get_product(self) -> pd.DataFrame:
+        """Returns the code and description for fuzzy matching."""
         conn = self._get_connection()
         try:
-            query = "SELECT warehouse_code, keywords FROM products"
+            query = "SELECT warehouse_code, description FROM products"
             return pd.read_sql(query, conn)
         finally:
             conn.close()
@@ -141,8 +138,7 @@ class Database:
         products_sql = """
             CREATE TABLE IF NOT EXISTS products (
                 warehouse_code TEXT PRIMARY KEY,
-                description TEXT,
-                keywords TEXT
+                description TEXT
             );
         """
 

@@ -1,6 +1,6 @@
 import ttkbootstrap as ttk
 
-from src.core.config import settings
+from src.core.settings import settings
 from src.gui.widgets import PathSelector, SliderSetting, ToggleSetting
 from src.lib.time import format_duration, parse_duration
 
@@ -218,7 +218,7 @@ class BackupSettings(ttk.Labelframe):
         settings.max_backups = self.var_max_backups.get()
 
         val = self.var_freq_val.get()
-        unit = self.var_freq_unit.get()
+        unit = self.var_freq_unit.get().lower()[0]
         settings.backup_interval = f"{val}{unit}"
 
     def is_modified(self):

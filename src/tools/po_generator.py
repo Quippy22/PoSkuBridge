@@ -5,7 +5,7 @@ import textwrap
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-from src.core.config import settings
+from src.core.settings import settings
 from src.tools.catalog_generator import catalog_gen
 
 

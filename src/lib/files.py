@@ -1,13 +1,12 @@
 import os
-import sqlite3
 
 from loguru import logger
 
-from src.core.config import settings
+from src.core.settings import settings
 from src.core.logger import task_scope
 
 
-def initialize_filesystem():
+def setup_filesystem():
     with task_scope("Filesystem Initialization"):
         
         # 1. Setup Internal Folders

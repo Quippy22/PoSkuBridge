@@ -6,7 +6,7 @@
 PoSkuBridge moves away from Excel-dependency to a robust Desktop App + SQLite architecture.
 
 * **Database (`poskubridge.db`):** The single source of truth.
-    * **Table `products`:** The internal master catalog (SKU, Description, Keywords).
+    * **Table `products`:** The internal master catalog (SKU, Description).
     * **Table `mappings`:** Vendor-specific knowledge (Vendor_SKU -> Internal_SKU).
 * **GUI (`ttkbootstrap`):** The interface for all user interactions (Load, Review, Export).
 
@@ -52,7 +52,7 @@ The system processes every line item from a PDF through a two-step logic:
 ---
 
 ## 4. Safety & Logging
-* **Backups:** The `.db` file is backed up to `/backups` with a timestamp on every application launch.
+* **Backups:** The `.db` file is backed up to `/backups` with a timestamp.
 * **Audit Logs:** Every session generates a `.txt` log in `/logs` recording:
     * Files processed.
     * User decisions (mappings created).

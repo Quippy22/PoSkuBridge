@@ -1,7 +1,7 @@
 import ttkbootstrap as ttk
 
 from src.gui.tabs.dashboard import Dashboard
-from src.core.config import settings
+from src.core.settings import settings
 
 
 class GUI(ttk.Window):

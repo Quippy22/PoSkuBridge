@@ -5,7 +5,7 @@ from loguru import logger
 from src.gui.options import SettingsWindow
 
 from src.core.logger import get_next_log
-from src.core.config import settings
+from src.core.settings import settings
 
 
 class VisualLogger(ttk.Labelframe):
