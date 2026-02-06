@@ -9,7 +9,7 @@ from src.lib.files import setup_filesystem
 
 # Development tools
 from src.tools.po_generator import PoGenerator
-from src.tools.tests import database_test, stress_test
+from src.tools.tests import database_test, stress_test, matcher_test
 from src.tools.wipe_data import nuke_environment
 
 if __name__ == "__main__":
@@ -24,7 +24,11 @@ if __name__ == "__main__":
 
     # The stress test
     # threading.Thread(target=stress_test, daemon=True).start()
+
     # The database test
     # threading.Thread(target=database_test, daemon=True).start()
+
+    # Populate db for the matcher test
+    #threading.Thread(target=matcher_test, daemon=True).start()
 
     gui.mainloop()
