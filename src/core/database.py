@@ -21,7 +21,7 @@ class Database:
             cursor.execute(
                 """
                 INSERT INTO products (warehouse_code, description)
-                VALUES (?, ?, ?)
+                VALUES (?, ?)
             """,
                 (warehouse_code, description),
             )
@@ -78,7 +78,7 @@ class Database:
         finally:
             conn.close()
 
-    def get_product(self) -> pd.DataFrame:
+    def get_products(self) -> pd.DataFrame:
         """Returns the code and description for fuzzy matching."""
         conn = self._get_connection()
         try:
