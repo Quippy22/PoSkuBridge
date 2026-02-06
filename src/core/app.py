@@ -1,13 +1,15 @@
 import queue
 import threading
 import time
+import shutil
 
 from loguru import logger
 
 from src.core.backup import backup
-from src.core.settings import settings
 from src.core.logger import task_scope
+from src.core.matcher import fuzzy_match, green_check
 from src.core.pdf_parser import PdfParser
+from src.core.settings import settings
 
 
 class App:
@@ -84,18 +86,25 @@ class App:
                 supplier, items = parser.run()
 
                 # Filter items
+                match_results = fuzzy_match(po_items=items, supplier=supplier)
 
-                # Check working mode
-                if mode.lower() == "auto":
-                    # Skip files without the all green status
-                    # Remove the file name from the set
+                # Check for all green status
+                if green_check(match_results):
+                # Yes -> export the file
                     pass
+
                 else:
-                    # Wait for human confirmation
-                    pass
+                    # No -> check working mode
+                    if mode.lower() == "auto":
+                        # Move the file
+                        shutil.move(file_path, settings.review_dir / file_path.name)
+                        # Remove the file name from the set
+                        self.processed_files.discard(file_path.name)
+                    else:
+                        # Wait for human confirmation
+                        # self.user_event.wait()
+                        pass
 
-                # print(supplier)
-                # print(items)
 
             except Exception as e:
                 logger.error(f"Worker: {e}")

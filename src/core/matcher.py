@@ -1,8 +1,8 @@
 import pandas as pd
 from rapidfuzz import fuzz, process
 
-from src.core.settings import settings
 from src.core.database import database as db
+from src.core.settings import settings
 
 
 def fuzzy_match(po_items: pd.DataFrame, supplier: str):
@@ -20,6 +20,7 @@ def fuzzy_match(po_items: pd.DataFrame, supplier: str):
     all_products = db.get_products()
 
     # 2. Declarations
+    threshold = settings.fuzzy_threshold % 100
     # History map (green): key = sku, value = warehouse_code
     history_map = dict(
         zip(available_mappings.iloc[:, 1], available_mappings.iloc[:, 0])
@@ -59,7 +60,7 @@ def fuzzy_match(po_items: pd.DataFrame, supplier: str):
         if match:
             best_desc, score, _ = match
 
-            if score >= settings.fuzzy_threshold:
+            if score >= threshold:
                 results.append(
                     {
                         "sku": pdf_sku,
@@ -83,3 +84,9 @@ def fuzzy_match(po_items: pd.DataFrame, supplier: str):
 
     # 4. Return
     return pd.DataFrame(results)
+
+
+def green_check(df) -> bool:
+    """Checks if all the flags in the matcher result are green"""
+    issues = df["flag"].isin(["red", "yellow"]).any()
+    return not issues
