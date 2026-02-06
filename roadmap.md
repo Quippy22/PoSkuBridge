@@ -54,11 +54,10 @@
 
 ## Phase 6: The Matcher Logic (The "Brain")
 **Goal:** Connect the Parsed Data to the Database to generate status flags.
-- [ ] **Normalization (Internal):** Create a temporary normalized version of the description *only* for keyword matching (leaving UI data untouched).
-- [ ] **Query Logic:**
+- [x] **Query Logic:**
     - **Step 1 (Hard Match):** SQL query for exact Vendor SKU matches in `mappings` table (checking specific Supplier Column).
     - **Step 2 (Soft Match):** Fuzzy keyword scoring against `products` table if no exact match found.
-- [ ] **Status Assignment:** Tag every row object with:
+- [x] **Status Assignment:** Tag every row object with:
     - 🟢 **GREEN:** Direct DB hit (Found in Supplier Column).
     - 🟡 **YELLOW:** High confidence prediction (Fuzzy Match).
     - 🔴 **RED:** Unknown/New item.
