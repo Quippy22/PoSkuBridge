@@ -1,7 +1,7 @@
 import ttkbootstrap as ttk
 
 from src.core.settings import settings
-from src.gui.widgets import PathSelector, SliderSetting, ToggleSetting
+from src.gui.widgets.options_widgets import PathSelector, SliderSetting, ToggleSetting
 from src.lib.time import format_duration, parse_duration
 
 
