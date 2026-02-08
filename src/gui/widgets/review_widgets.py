@@ -38,6 +38,7 @@ class CodeSearch(ttk.Frame):
 
         # Move focus to the listbox to scroll
         self.entry.bind("<Down>", self.on_arrow_down)
+        self.entry.bind("<Up>", self.on_arrow_up)
         # Select the top item
         self.entry.bind("<Return>", self.on_select)
 
@@ -59,7 +60,10 @@ class CodeSearch(ttk.Frame):
 
         # 3. Fuzzy matching
         results = process.extract(
-            typed, self.code_list, scorer=fuzz.token_sort_ratio, limit=5
+            typed,
+            self.code_list,
+            scorer=fuzz.token_sort_ratio,
+            limit=5
         )
         if results:
             self.update_list(results)
@@ -90,12 +94,50 @@ class CodeSearch(ttk.Frame):
         self.listbox.activate(0)
 
     def on_arrow_down(self, event):
-        """Moves focus from Entry to the Listbox so user can scroll"""
-        if self.listbox_open and self.listbox.size() > 0:
-            self.listbox.focus_set()
-            self.listbox.selection_clear(0, END)
-            self.listbox.selection_set(0)
-            self.listbox.activate(0)
+        """Move selection down in the suggestion box"""
+        if not self.listbox_open or self.listbox.size() == 0:
+            return
+
+        # 1. Get the current index
+        curr = self.listbox.curselection()
+        if not curr:
+            index = 0
+        else:
+            # 'curselection' returns a tuple with the index
+            index = curr[0] + 1
+
+        # 2. Loop at the bottom
+        if index >= self.listbox.size():
+            index = 0
+
+        # 3. Update the highlight
+        self.listbox.selection_clear(0, END)
+        self.listbox.selection_set(index)
+        self.listbox.activate(index)
+        self.listbox.see(index)
+
+    def on_arrow_up(self, event):
+        """Move selection up in the suggestion box"""
+        if not self.listbox_open or self.listbox.size() == 0:
+            return
+
+        # 1. Get the current index
+        current = self.listbox.curselection()
+        if not current:
+            index = 0
+        else:
+            # 'curselection' returns a tuple with the index
+            index = current[0] - 1
+
+        # 2. Loop at the bottom
+        if index < 0:
+            index = self.listbox.size() - 1
+
+        # 3. Update the highlight
+        self.listbox.selection_clear(0, END)
+        self.listbox.selection_set(index)
+        self.listbox.activate(index)
+        self.listbox.see(index)
 
     def on_select(self, event):
         """Selects the top item and puts it into the Entry"""
