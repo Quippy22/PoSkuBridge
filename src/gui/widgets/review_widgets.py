@@ -5,12 +5,20 @@ import ttkbootstrap as ttk
 from rapidfuzz import fuzz, process
 
 
-class CodeSearch(ttk.Frame):
-    def __init__(self, parent, code_list, descriptions_list, placeholder=""):
+class TriageSearchBox(ttk.Frame):
+    """Entry widget for the warehouse code with a suggestion box"""
+
+    def __init__(
+        self,
+        parent,
+        codes_list: list[str],
+        descriptions_list: list[str],
+        placeholder="",
+    ):
         super().__init__(parent, bootstyle="primary")
 
-        # Store the data in a lists for easier searching
-        self.code_list = code_list
+        # Store the data in lists for easier searching
+        self.code_list = codes_list
         self.desc_list = descriptions_list
 
         # -- UI Setup --
@@ -42,7 +50,7 @@ class CodeSearch(ttk.Frame):
         # Select the top item
         self.entry.bind("<Return>", self.on_select)
 
-        # Close the dropdown if the user click somewhere else
+        # Close the dropdown if the user clicks somewhere else
         self.entry.bind("<FocusOut>", self.on_focus_out)
         # Handle clicking an item in the dropbox
         self.listbox.bind("<<ListboxSelect>>", self.on_list_click)
@@ -60,10 +68,7 @@ class CodeSearch(ttk.Frame):
 
         # 3. Fuzzy matching
         results = process.extract(
-            typed,
-            self.code_list,
-            scorer=fuzz.token_sort_ratio,
-            limit=5
+            typed, self.code_list, scorer=fuzz.token_sort_ratio, limit=5
         )
         if results:
             self.update_list(results)
@@ -85,7 +90,6 @@ class CodeSearch(ttk.Frame):
 
         # 3. Show the new listbox
         if not self.listbox_open:
-            # Pack it under the Entry
             self.listbox.pack(fill="x", expand=True, pady=(0, 2))
             self.listbox_open = True
 
@@ -142,9 +146,13 @@ class CodeSearch(ttk.Frame):
     def on_select(self, event):
         """Selects the top item and puts it into the Entry"""
         if self.listbox_open and self.listbox.size() > 0:
-            # Select top item
-            self.listbox.selection_clear(0, END)
-            self.listbox.selection_set(0)
+            selection = self.listbox.curselection()
+
+            if selection:
+                pass
+            else:
+                self.listbox.selection_clear(0, END)
+                self.listbox.selection_set(0)
 
             # Simulate a click
             self.on_list_click(None)
@@ -179,6 +187,13 @@ class CodeSearch(ttk.Frame):
             self.listbox.pack_forget()
             self.listbox_open = False
 
+    def disable(self):
+        """Toggle between read only and normal states"""
+        state = self.entry['state']
+        state = "disabled" if state == "normal" else "normal"
+        self.entry.configure(state=state)
+        self.close_list()
+
     def _apply_styles(self):
         """Manually paints the standard Listbox to match the ttkbootstrap theme"""
         # 1. Get the current style object
@@ -204,6 +219,86 @@ class CodeSearch(ttk.Frame):
             borderwidth=0,
         )
 
-    def get_code(self):
+    def get_code(self) -> str:
         """Returns the string inside the variable"""
         return self.var.get().strip()
+
+
+class TriageRow(ttk.Frame):
+    """
+    Row layout:
+    [ SKU Label ] [ Smart Search Box (Code + Desc) ] [ Flag ] [ Score ] [ ☑ Confirm ]
+    """
+
+    def __init__(
+        self,
+        parent,
+        row_data: dict,
+        codes_list: list,
+        descriptions_list: list,
+    ):
+        super().__init__(parent)
+        self.pack(fill="x", pady=2, padx=5)
+
+        # {sku, description, warehouse, flag, score}
+        self.data = row_data
+        
+        # Search takes all the extra space
+        self.columnconfigure(1, weight=2, minsize=180)
+        self.columnconfigure(2, weight=1)
+
+        # -- SKU --
+        ttk.Label(
+            self,
+            text=str(row_data["sku"]),
+            font=("Consolas", 10, "bold"),
+        ).grid(row=0, column=0, sticky="wn", padx=5)
+
+        # -- Description --
+        desc_text = str(self.data["description"])
+        if len(desc_text) > 50:
+            desc_text = desc_text[:47] + "..."
+
+        ttk.Label(
+            self,
+            text=desc_text,
+            width=30
+        ).grid(row=0, column=1, sticky="ewn", padx=5)
+
+        # -- Search Box --
+        if self.data.get("warehouse_code") is not None:
+            placeholder = self.data["warehouse_code"]
+        else:
+            placeholder = ""
+
+        self.search = TriageSearchBox(self, codes_list, descriptions_list, placeholder)
+        self.search.grid(row=0, column=2, sticky="ewn", padx=5)
+
+        # -- Flag --
+        flag = row_data["flag"]
+        color = "warning" if flag == "yellow" else "danger"
+        ttk.Label(
+            self,
+            text="  ",
+            bootstyle=f"{color}-inverse"
+        ).grid(row=0, column=3, sticky="ewn", padx=5)
+
+        # -- Score --
+        if flag != "green":
+            score_text = f"{int(row_data.get("score", 0))}%" if flag == "yellow" else ""
+            ttk.Label(
+                self,
+                text=score_text,
+                width=5,
+                bootstyle="secondary",
+            ).grid(row=0, column=4, padx=5, sticky="n")
+
+        # -- Confirm Button --
+        self.is_confirmed = ttk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            self,
+            variable=self.is_confirmed,
+            text="Confirm",
+            bootstyle="success",
+            command=self.search.disable
+        ).grid(row=0, column=5, sticky="en", padx=5)

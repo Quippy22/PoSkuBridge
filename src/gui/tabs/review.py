@@ -3,11 +3,7 @@ from tkinter import END, constants
 
 import ttkbootstrap as ttk
 
-from src.gui.widgets.review_widgets import CodeSearch
-
-
-class Row:
-    pass
+from src.gui.widgets.review_widgets import TriageRow
 
 
 class Review:
@@ -17,7 +13,7 @@ class Review:
 if __name__ == "__main__":
     # 1. Setup a test window with a theme (try 'darkly' or 'flatly')
     app = ttk.Window(themename="darkly")
-    app.geometry("400x300")
+    app.geometry("640x480")
     app.title("Widget Test Lab")
 
     # 2. Create dummy data
@@ -35,7 +31,17 @@ if __name__ == "__main__":
     ]
     # 3. Instantiate your widget
     # We pack it with some padding to see it clearly
-    widget = CodeSearch(app, codes, descriptions)
-    widget.pack(pady=50, padx=20)
+    data = {
+        "sku" : "TS-104",
+        "description": "M5 Bolt Stainless",
+        "warehouse_code" : "WH-001",
+        "flag" : "yellow",
+        "score" : 90
+    }
+    
+    widget1 = TriageRow(app, data, codes, descriptions)
+    widget2 = TriageRow(app, data, codes, descriptions)
+    widget1.pack(padx=10, pady=10)
+    widget2.pack(padx=10, pady=10)
 
     app.mainloop()
