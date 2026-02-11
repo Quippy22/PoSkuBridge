@@ -5,7 +5,7 @@ import ttkbootstrap as ttk
 from rapidfuzz import fuzz, process
 
 
-class TriageSearchBox(ttk.Frame):
+class ReviewSearchBox(ttk.Frame):
     """Entry widget for the warehouse code with a suggestion box"""
 
     def __init__(
@@ -188,11 +188,11 @@ class TriageSearchBox(ttk.Frame):
             self.listbox_open = False
 
     def disable(self):
-        """Toggle between read only and normal states"""
-        state = self.entry['state']
-        state = "disabled" if state == "normal" else "normal"
-        self.entry.configure(state=state)
+        self.entry.configure(state="readonly")
         self.close_list()
+
+    def enable(self):
+        self.entry.configure(state="normal")
 
     def _apply_styles(self):
         """Manually paints the standard Listbox to match the ttkbootstrap theme"""
@@ -219,12 +219,8 @@ class TriageSearchBox(ttk.Frame):
             borderwidth=0,
         )
 
-    def get_code(self) -> str:
-        """Returns the string inside the variable"""
-        return self.var.get().strip()
 
-
-class TriageRow(ttk.Frame):
+class ReviewRow(ttk.Frame):
     """
     Row layout:
     [ SKU Label ] [ Smart Search Box (Code + Desc) ] [ Flag ] [ Score ] [ ☑ Confirm ]
@@ -271,7 +267,7 @@ class TriageRow(ttk.Frame):
         else:
             placeholder = ""
 
-        self.search = TriageSearchBox(self, codes_list, descriptions_list, placeholder)
+        self.search = ReviewSearchBox(self, codes_list, descriptions_list, placeholder)
         self.search.grid(row=0, column=2, sticky="ewn", padx=5)
 
         # -- Flag --
@@ -300,5 +296,15 @@ class TriageRow(ttk.Frame):
             variable=self.is_confirmed,
             text="Confirm",
             bootstyle="success",
-            command=self.search.disable
+            command=self._toggle_search
         ).grid(row=0, column=5, sticky="en", padx=5)
+
+    def get_mapping(self) -> tuple[str, str]:
+        """Returns a tuple (warehouse_code, sku)"""
+        return self.search.var.get().strip(), str(self.data["sku"])
+
+    def _toggle_search(self):
+        if self.is_confirmed.get():
+            self.search.enable()
+        else:
+            self.search.disable()

@@ -26,7 +26,7 @@
 - [x] **Main Window:** Setup `ttkbootstrap` Window with valid theme.
 - [x] **Tab 1 (Dashboard):** A "Process Log" text area + Buttons.
 - [x] **Settings:** A new window for changing the settings.
-- [ ] **Tab 2 (Triage):** Empty TableView placeholder + "Commit" button (Disabled).
+- [x] **Tab 2 (Triage):** Empty TableView placeholder + "Commit" button (Disabled).
 - [x] **Wiring:** Connect to the backend (Threaded App Engine).
 
 ---
@@ -66,7 +66,7 @@
 
 ## Phase 7: Interaction & Learning (The Triage)
 **Goal:** The Clerk corrects data in the UI and the system learns.
-- [ ] **Triage Table Implementation:** Render the rows in Tab 2.
+- [x] **Triage Table Implementation:** Render the rows in Tab 2.
     - **Red/Yellow:** Editable Autocomplete Combobox connected to `products` table.
     - **Green:** Read-only view.
 - [ ] **Catalog Search:** "Magnifying Glass" popup to fuzzy search the `products` table (replacing the need to open Excel).
