@@ -5,7 +5,7 @@ from src.core.database import database as db
 from src.core.settings import settings
 
 
-def fuzzy_match(po_items: pd.DataFrame, supplier: str):
+def fuzzy_match(po_items: pd.DataFrame, supplier: str) -> pd.DataFrame:
     """
     Creates a DataFrame mapping PDF items to internal codes.
 
@@ -36,8 +36,8 @@ def fuzzy_match(po_items: pd.DataFrame, supplier: str):
     # 3. Parsing
     for index, row in po_items.iterrows():
         # Clean inputs
-        pdf_sku = str(row["SKU"]).strip()
-        pdf_desc = str(row["DESCRIPTION"]).strip()
+        pdf_sku = str(row["sku"]).strip()
+        pdf_desc = str(row["description"]).strip()
 
         # Check history for perfect matches
         if pdf_sku in history_map:

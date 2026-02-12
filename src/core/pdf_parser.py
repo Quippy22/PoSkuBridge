@@ -170,7 +170,10 @@ class PdfParser:
 
         # 1. Standardize headers
         self.po_table.columns = (
-            self.po_table.columns.astype(str).str.replace(r"\n", "").str.strip()
+            self.po_table.columns.astype(str)
+            .str.replace(r"\n", "")
+            .str.strip()
+            .str.lower()
         )
 
         # Change duplicate headers to 'name.number'
@@ -194,7 +197,7 @@ class PdfParser:
         cols_to_drop = [
             c
             for c in self.po_table.columns
-            if any(x in c.upper() for x in ["PRICE", "TOTAL", "AMOUNT", "COST"])
+            if any(x in c for x in ["price", "total", "amount", "cost"])
         ]
         self.po_table = self.po_table.drop(columns=cols_to_drop)
 
