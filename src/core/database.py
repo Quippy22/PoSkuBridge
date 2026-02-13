@@ -1,3 +1,4 @@
+import re
 import sqlite3
 
 import pandas as pd
@@ -56,7 +57,9 @@ class Database:
                 logger.error(f"Cannot map to {warehouse_code}: Product not found.")
             else:
                 conn.commit()
-                logger.info(f"Mapped {supplier_name} [{supplier_sku}] -> {warehouse_code}")
+                logger.info(
+                    f"Mapped {supplier_name} [{supplier_sku}] -> {warehouse_code}"
+                )
 
         except Exception as e:
             logger.error(f"Mapping save failed: {e}")
@@ -105,20 +108,22 @@ class Database:
         cursor.execute("PRAGMA table_info(mappings)")
         existing_cols = [row["name"] for row in cursor.fetchall()]
 
-        # Use quotes to handle spaces safely
-        col_name = f'"{supplier}"'
+        # Clean the supplier name before adding it
+        clean_sup = supplier.lower().strip()
+        clean_sup = re.sub(r"[^a-z0-9]", "", clean_sup)
 
         # Check against raw name
-        if supplier not in existing_cols:
+        if clean_sup not in existing_cols:
             try:
                 logger.info(f"New supplier: {supplier}, adding column...")
-                cursor.execute(f"ALTER TABLE mappings ADD COLUMN {col_name} TEXT")
+                # Use quotes to handle spaces safely
+                cursor.execute(f'ALTER TABLE mappings ADD COLUMN "{clean_sup}" TEXT')
                 conn.commit()
             except Exception as e:
                 logger.error(f"Failed to add supplier column: {e}")
 
         conn.close()
-        return col_name
+        return clean_sup
 
     def _get_connection(self) -> sqlite3.Connection:
         """Ensures there is always a valid connection for the current thread."""
