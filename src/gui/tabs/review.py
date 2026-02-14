@@ -136,8 +136,11 @@ class Review(ttk.Labelframe):
 
         # Get codes and descriptions
         df = db.get_products()
-        codes = df["warehouse_code"].dropna().astype(str).tolist()
-        descriptions = df["description"].dropna().astype(str).tolist()
+        # Ensure we don't have misaligned lists
+        df = df.dropna(subset=["warehouse_code", "description"])
+        
+        codes = df["warehouse_code"].astype(str).tolist()
+        descriptions = df["description"].astype(str).tolist()
 
         # Add the row to the list
         for r in rows_data:
@@ -160,7 +163,7 @@ class Review(ttk.Labelframe):
             r.search.disable()
 
     def on_commit(self):
-        """Coommit only if every single row has been reviewed and confirmed"""
+        """Commit only if every single row has been reviewed and confirmed"""
         unconfirmed_rows = [row for row in self.rows if not row.is_confirmed.get()]
         if unconfirmed_rows:
             # Notify user

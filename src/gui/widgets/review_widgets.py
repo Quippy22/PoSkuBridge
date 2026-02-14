@@ -315,6 +315,6 @@ class ReviewRow(ttk.Frame):
 
     def _toggle_search(self):
         if self.is_confirmed.get():
-            self.search.enable()
-        else:
             self.search.disable()
+        else:
+            self.search.enable()
