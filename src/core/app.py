@@ -108,12 +108,22 @@ class App:
                         shutil.move(file_path, settings.review_dir / file_path.name)
                         # Remove the file name from the set
                         self.processed_files.discard(file_path.name)
+                        continue
                     else:
                         logger.info(f"Requesting user review for {file_path.name}")
-                        # 1. Format the data
+                        
+                        # 1. Move to Review folder
+                        review_path = settings.review_dir / file_path.name
+                        try:
+                            shutil.move(file_path, review_path)
+                        except Exception as e:
+                            logger.error(f"Failed to move file to review: {e}")
+                            continue
+
+                        # 2. Format the data
                         stats, rows = prepare_review_data(items, match_results)
 
-                        # 2. Statsh the data
+                        # 3. Statsh the data
                         self.current_review_payload = {
                             "supplier": supplier,
                             "rows": rows,
@@ -121,14 +131,26 @@ class App:
                         }
                         self.needs_review = True
 
-                        # 3. Clear the flag so we can wait on it
+                        # 4. Clear the flag so we can wait on it
                         self.user_event.clear()
                         
-                        # 4. Wait for human confirmation
+                        # 5. Wait for human confirmation
                         self.user_event.wait()
 
-                        # 5. Clean up
+                        # 6. Clean up
                         self.current_review_payload = None
+
+                        # 7. Move back to Input
+                        input_path = settings.input_dir / file_path.name
+                        try:
+                            shutil.move(review_path, input_path)
+                            logger.info(f"Moved {file_path.name} back to Input for re-processing")
+                        except Exception as e:
+                            logger.error(f"Failed to move file back to Input: {e}")
+
+                        # 8. Allow re-processing
+                        self.processed_files.discard(file_path.name)
+                        continue
 
                 # Archive the file after it was processed
                 if settings.archive_processed_files:
