@@ -12,7 +12,7 @@ def stress_test():
         # Create a fake PO
         pogen = PoGenerator()
         pogen.generate_pdf()
-        pogen.print_po_table()
+        # pogen.print_po_table()
 
         time.sleep(0.5)
 

@@ -1,6 +1,6 @@
 from loguru import logger
 
-from core.logger import task_scope
+from src.core.logger import task_scope
 from src.core.database import database as db
 
 @logger.catch(reraise=True)

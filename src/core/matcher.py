@@ -20,7 +20,7 @@ def fuzzy_match(po_items: pd.DataFrame, supplier: str) -> pd.DataFrame:
     all_products = db.get_products()
 
     # 2. Declarations
-    threshold = settings.fuzzy_threshold % 100
+    threshold = settings.fuzzy_threshold * 100
     # History map (green): key = sku, value = warehouse_code
     history_map = dict(
         zip(available_mappings.iloc[:, 1], available_mappings.iloc[:, 0])
