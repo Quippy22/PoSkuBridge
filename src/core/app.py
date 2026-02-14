@@ -10,6 +10,7 @@ from src.core.logger import task_scope
 from src.core.matcher import fuzzy_match, green_check
 from src.core.pdf_parser import PdfParser
 from src.core.settings import settings
+from src.lib.data import prepare_review_data
 
 
 class App:
@@ -23,6 +24,7 @@ class App:
         self.user_event = threading.Event()  # Stop the parser
         self.stop_event = threading.Event()  # Safely stop the app
         self.user_decision = None  # approve or skip
+        self.needs_review = False
 
         # -- The Threads --
         # The Watcher
@@ -83,16 +85,22 @@ class App:
 
             try:
                 parser = PdfParser(file_path)
+                # items format: [QTY, SKU, DESCRIPTION]
                 supplier, items = parser.run()
 
                 # Filter items
-                match_results = fuzzy_match(po_items=items, supplier=supplier)
+                # format: [sku, warehouse_code, flag, score]
+                if supplier is None or items is None:
+                    logger.warning(f"Skipping {file_path.name}: Could not parse supplier/items.")
+                    continue
 
+                match_results = fuzzy_match(po_items=items, supplier=supplier)
+                print(match_results)
+                print()
                 # Check for all green status
                 if green_check(match_results):
-                # Yes -> export the file
-                    pass
-
+                    # Yes -> export the file
+                    logger.info(f"Auto-exporting {file_path.name}")
                 else:
                     # No -> check working mode
                     if mode.lower() == "auto":
@@ -101,14 +109,40 @@ class App:
                         # Remove the file name from the set
                         self.processed_files.discard(file_path.name)
                     else:
-                        # Wait for human confirmation
-                        # self.user_event.wait()
-                        pass
+                        logger.info(f"Requesting user review for {file_path.name}")
+                        # 1. Format the data
+                        stats, rows = prepare_review_data(items, match_results)
 
+                        # 2. Statsh the data
+                        self.current_review_payload = {
+                            "supplier": supplier,
+                            "rows": rows,
+                            "stats": stats
+                        }
+                        self.needs_review = True
+
+                        # 3. Clear the flag so we can wait on it
+                        self.user_event.clear()
+                        
+                        # 4. Wait for human confirmation
+                        self.user_event.wait()
+
+                        # 5. Clean up
+                        self.current_review_payload = None
+
+                # Archive the file after it was processed
+                if settings.archive_processed_files:
+                    try:
+                        dest = settings.archive_dir / file_path.name
+                        shutil.move(file_path, dest)
+                        logger.info(f"Archived {file_path.name}")
+
+                        self.processed_files.discard(file_path.name)
+                    except Exception as e:
+                        logger.error(f"Failed to archive {file_path.name}: {e}")
 
             except Exception as e:
                 logger.error(f"Worker: {e}")
-
         logger.info("Worker: Stopped")
 
     @logger.catch

@@ -252,8 +252,8 @@ class ReviewRow(ttk.Frame):
 
         # -- Description --
         desc_text = str(self.data["description"])
-        if len(desc_text) > 50:
-            desc_text = desc_text[:47] + "..."
+        if len(desc_text) > 90:
+            desc_text = desc_text[:87] + "..."
 
         ttk.Label(
             self,
@@ -272,7 +272,13 @@ class ReviewRow(ttk.Frame):
 
         # -- Flag --
         flag = row_data["flag"]
-        color = "warning" if flag == "yellow" else "danger"
+        if flag == "green":
+            color = "success"
+        elif flag == "yellow":
+            color = "warning"
+        else:
+            color = "danger"
+
         ttk.Label(
             self,
             text="  ",
@@ -281,7 +287,8 @@ class ReviewRow(ttk.Frame):
 
         # -- Score --
         if flag != "green":
-            score_text = f"{int(row_data.get("score", 0))}%" if flag == "yellow" else ""
+            score_text = f"{int(row_data.get("score", 0))}%"
+
             ttk.Label(
                 self,
                 text=score_text,
@@ -290,7 +297,10 @@ class ReviewRow(ttk.Frame):
             ).grid(row=0, column=4, padx=5, sticky="n")
 
         # -- Confirm Button --
-        self.is_confirmed = ttk.BooleanVar(value=False)
+        self.is_confirmed = ttk.BooleanVar(
+            value=False if flag != "green" else True
+        )
+
         ttk.Checkbutton(
             self,
             variable=self.is_confirmed,

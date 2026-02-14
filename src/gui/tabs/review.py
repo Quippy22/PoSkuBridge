@@ -1,10 +1,12 @@
 import tkinter as tk
+from tkinter import messagebox
 
 import ttkbootstrap as ttk
 from loguru import logger
 
 from src.core.database import database as db
 from src.gui.widgets.review_widgets import ReviewRow
+from src.lib.mappings import save_mappings_batch
 
 
 class Footer(ttk.Frame):
@@ -135,7 +137,7 @@ class Review(ttk.Labelframe):
         # Get codes and descriptions
         df = db.get_products()
         codes = df["warehouse_code"].dropna().astype(str).tolist()
-        descriptions = df["descriptions"].dropna().astype(str).tolist()
+        descriptions = df["description"].dropna().astype(str).tolist()
 
         # Add the row to the list
         for r in rows_data:
@@ -158,11 +160,38 @@ class Review(ttk.Labelframe):
             r.search.disable()
 
     def on_commit(self):
+        """Coommit only if every single row has been reviewed and confirmed"""
+        unconfirmed_rows = [row for row in self.rows if not row.is_confirmed.get()]
+        if unconfirmed_rows:
+            # Notify user
+            messagebox.showwarning(
+                "Incomplete review",
+                f"You have{len(unconfirmed_rows)} items left to review.\n\nPlease confirm all matches before saving."
+            )
+            return
+            
+        invalid_rows = []
         mappings = []
         for r in self.rows:
             code, sku = r.get_mapping()
-            mappings.append({"sku": sku, "warehouse_code": code})
+            
+            if not code or not code.strip():
+                invalid_rows.append(sku)
+            else:
+                mappings.append({"sku": sku, "warehouse_code": code})
 
-        if mappings:
-            # TODO: call helper to add the mappings
-            logger.info(f"User committed {len(mappings)} new mappings for {self.supplier}")
+        if invalid_rows:
+            messagebox.showerror(
+                "Missing Codes",
+                f"The following confirmed items have no warehouse code:\n\n{', '.join(invalid_rows[:5])}..."
+            )
+            return
+        
+        try:
+            if mappings:
+                save_mappings_batch(self.supplier, mappings)
+
+            self.destroy()
+            self.backend.user_event.set()
+        except Exception as e:
+            logger.error(f"Failed to save mappings {e}")

@@ -23,7 +23,7 @@ if __name__ == "__main__":
     gui = GUI(backend)
 
     # The stress test
-    # threading.Thread(target=stress_test, daemon=True).start()
+    threading.Thread(target=stress_test, daemon=True).start()
 
     # The database test
     # threading.Thread(target=database_test, daemon=True).start()
