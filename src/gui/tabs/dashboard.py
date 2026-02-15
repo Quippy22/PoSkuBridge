@@ -141,9 +141,7 @@ class ModeSwitcher(ttk.Labelframe):
     def __init__(self, parent):
         super().__init__(parent, text="Operation Mode", bootstyle="primary")
 
-        self.mode = ttk.StringVar(
-            value=settings.working_mode if settings.keep_working_mode else "off"
-        )
+        self.mode = ttk.StringVar(value=settings.working_mode)
 
         self.off_btn = ttk.Radiobutton(
             self,
@@ -151,7 +149,7 @@ class ModeSwitcher(ttk.Labelframe):
             variable=self.mode,
             value="off",
             bootstyle="danger-toolbutton",
-            command=self.update_backend
+            command=self.update_backend,
         )
         self.auto_btn = ttk.Radiobutton(
             self,
@@ -159,7 +157,7 @@ class ModeSwitcher(ttk.Labelframe):
             variable=self.mode,
             value="auto",
             bootstyle="success-toolbutton",
-            command=self.update_backend
+            command=self.update_backend,
         )
         self.hybrid_btn = ttk.Radiobutton(
             self,
@@ -167,18 +165,39 @@ class ModeSwitcher(ttk.Labelframe):
             variable=self.mode,
             value="hybrid",
             bootstyle="info-toolbutton",
-            command=self.update_backend
+            command=self.update_backend,
         )
 
         self.off_btn.grid(row=0, column=0, padx=(10, 5), pady=10)
         self.auto_btn.grid(row=0, column=1, padx=5, pady=10)
         self.hybrid_btn.grid(row=0, column=2, padx=(5, 10), pady=10)
 
+        self._update_button_states()
+
     def update_backend(self):
         settings.working_mode = self.mode.get().lower()
         if settings.keep_working_mode:
             settings.save()
         logger.info(f"Working mode: {self.mode.get()}")
+        self._update_button_states()
+
+    def _update_button_states(self):
+        """Prevents interaction with the currently active mode while keeping its color"""
+        current = self.mode.get()
+
+        for btn, val in [
+            (self.off_btn, "off"),
+            (self.auto_btn, "auto"),
+            (self.hybrid_btn, "hybrid"),
+        ]:
+            if current == val:
+                # Intercept the click and change cursor to show it's not interactive
+                btn.bind("<Button-1>", lambda e: "break")
+                btn.configure(cursor="arrow")
+            else:
+                # Restore interaction
+                btn.unbind("<Button-1>")
+                btn.configure(cursor="hand2")
 
 
 class StatusBar(ttk.Labelframe):

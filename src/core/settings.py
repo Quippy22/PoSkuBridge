@@ -81,6 +81,10 @@ class Settings:
             for key, value in loaded_data.items():
                 self._data[key] = value
 
+            # Enforce the logic: If we don't keep the mode, reset to OFF
+            if not self._data.get("keep_working_mode", False):
+                self._data["working_mode"] = "off"
+
             logger.info("Settings loaded.")
         except Exception as e:
             logger.error(f"Config corrupt ({e}). Using defaults.")
