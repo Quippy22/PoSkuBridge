@@ -30,3 +30,24 @@ def setup_filesystem():
         for f in data:
             os.makedirs(f, exist_ok=True)
             logger.info(f"Checked data directory: {f}")
+
+
+def move_review_to_input():
+    """Moves all files from Review folder back to Input."""
+    import shutil
+    
+    review_dir = settings.review_dir
+    input_dir = settings.input_dir
+    
+    files = list(review_dir.glob("*.pdf"))
+    if not files:
+        return
+
+    with task_scope("Restoring Review Files"):
+        for f in files:
+            try:
+                dest = input_dir / f.name
+                shutil.move(f, dest)
+                logger.info(f"Restored to Input: {f.name}")
+            except Exception as e:
+                logger.error(f"Failed to restore {f.name}: {e}")

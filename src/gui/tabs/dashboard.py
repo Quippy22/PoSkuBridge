@@ -4,6 +4,7 @@ from loguru import logger
 
 from src.core.logger import get_next_log
 from src.core.settings import settings
+from src.lib.files import move_review_to_input
 
 
 class VisualLogger(ttk.Labelframe):
@@ -133,7 +134,17 @@ class QueueStatus(ttk.Labelframe):
         self.after(200, self.update_remaining)
 
     def update_skipped(self):
-        pass
+        """Counts the files in the Review directory and updates the UI"""
+        try:
+            review_dir = settings.review_dir
+            if review_dir.exists():
+                skipped = len(list(review_dir.glob("*.pdf")))
+                self.skipped.configure(text=str(skipped))
+        except Exception as e:
+            logger.error(f"Skipped counter error: {e}")
+        
+        # Loop the check
+        self.after(500, self.update_skipped)
 
 class ModeSwitcher(ttk.Labelframe):
     def __init__(self, parent):
@@ -173,9 +184,15 @@ class ModeSwitcher(ttk.Labelframe):
         self._update_button_states()
 
     def update_backend(self):
-        settings.working_mode = self.mode.get().lower()
+        new_mode = self.mode.get().lower()
+        settings.working_mode = new_mode
         if settings.keep_working_mode:
             settings.save()
+        
+        # If switching to hybrid, restore review files to input
+        if new_mode == "hybrid":
+            move_review_to_input()
+
         logger.info(f"Working mode: {self.mode.get()}")
         self._update_button_states()
 
