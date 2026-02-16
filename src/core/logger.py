@@ -7,7 +7,7 @@ from src.core.settings import settings
 
 # The queue for the GUI to read from
 log_queue = queue.Queue()
-_current_task = "Ready"
+_current_task = "Waiting for order"
 
 
 def indent_patcher(record):

@@ -17,7 +17,7 @@ class StatusBar(ttk.Frame):
         # 1. Active Process Label (Left)
         self.label = ttk.Label(
             self,
-            text="Active Process: Ready",
+            text="Active Process: Waiting for order",
             font=("Segoe UI", 10),
             bootstyle="inverse-secondary",
         )
@@ -104,7 +104,14 @@ class GUI(ttk.Window):
 
     def _update_status(self):
         """Pulls the current task from the logger and updates UI."""
-        if self.backend.needs_review:
+        # Check if review tab is open
+        is_reviewing = False
+        for tab_id in self.notebook.tabs():
+            if self.notebook.tab(tab_id, "text") == "Review mappings":
+                is_reviewing = True
+                break
+
+        if is_reviewing:
             self.status_bar.set_task("Reviewing order")
         else:
             task = get_current_task()

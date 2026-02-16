@@ -69,8 +69,7 @@ def fuzzy_match(po_items: pd.DataFrame, supplier: str) -> pd.DataFrame:
                         "score": int(score),
                     }
                 )
-            # Found it, moving on
-            continue
+                continue
 
         # We didn't get a match/it wasn't good enough
         results.append(

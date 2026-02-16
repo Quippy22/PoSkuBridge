@@ -42,18 +42,19 @@ class Watcher(BasicThread):
         super().__init__(app, "Watcher")
 
     def cycle(self):
-        try:
-            in_path = settings.input_dir
-            files = list(in_path.glob("*.pdf"))
+        with task_scope("Scanning for files"):
+            try:
+                in_path = settings.input_dir
+                files = list(in_path.glob("*.pdf"))
 
-            for f in files:
-                if f.name not in self.app.processed_files:
-                    logger.info(f"Found new file: {f.name}")
-                    self.app.file_queue.put(f)
-                    # Don't process a file twice
-                    self.app.processed_files.add(f.name)
-        except Exception as e:
-            logger.error(f"Watcher: {e}")
+                for f in files:
+                    if f.name not in self.app.processed_files:
+                        logger.info(f"Found new file: {f.name}")
+                        self.app.file_queue.put(f)
+                        # Don't process a file twice
+                        self.app.processed_files.add(f.name)
+            except Exception as e:
+                logger.error(f"Watcher: {e}")
 
         if self.stop_event.wait(timeout=2):
             return
@@ -102,91 +103,94 @@ class Worker(BasicThread):
         self.process_file(file_path, mode)
 
     def process_file(self, file_path, mode):
-        try:
-            parser = PdfParser(file_path)
-            # items format: [QTY, SKU, DESCRIPTION]
-            supplier, items = parser.run()
+        with task_scope(f"Parsing {file_path.name}"):
+            try:
+                parser = PdfParser(file_path)
+                # items format: [QTY, SKU, DESCRIPTION]
+                supplier, items = parser.run()
 
-            # Filter items
-            # format: [sku, warehouse_code, flag, score]
-            if supplier is None or items is None:
-                logger.warning(
-                    f"Skipping {file_path.name}: Could not parse supplier/items."
-                )
-                return
+                # Filter items
+                # format: [sku, warehouse_code, flag, score]
+                if supplier is None or items is None:
+                    logger.warning(
+                        f"Skipping {file_path.name}: Could not parse supplier/items."
+                    )
+                    return
 
-            match_results = fuzzy_match(po_items=items, supplier=supplier)
+                match_results = fuzzy_match(po_items=items, supplier=supplier)
 
-            # Check for all green status
-            if green_check(match_results):
-                self.handle_green(file_path, supplier, match_results)
-            else:
-                self.handle_review(file_path, supplier, items, match_results, mode)
+                # Check for all green status
+                if green_check(match_results):
+                    self.handle_green(file_path, supplier, match_results)
+                else:
+                    self.handle_review(file_path, supplier, items, match_results, mode)
 
-        except Exception as e:
-            logger.error(f"Worker failed processing {file_path.name}: {e}")
+            except Exception as e:
+                logger.error(f"Worker failed processing {file_path.name}: {e}")
 
     def handle_green(self, file_path, supplier, match_results):
-        # Yes -> export the file
-        logger.info(f"Auto-exporting {file_path.name}")
+        with task_scope(f"Archiving {file_path.name}"):
+            # Yes -> export the file
+            logger.info(f"Auto-exporting {file_path.name}")
 
-        # Archive the file after it was processed
-        if settings.archive_processed_files:
-            try:
-                dest = settings.archive_dir / file_path.name
-                shutil.move(file_path, dest)
-                logger.info(f"Archived {file_path.name}")
+            # Archive the file after it was processed
+            if settings.archive_processed_files:
+                try:
+                    dest = settings.archive_dir / file_path.name
+                    shutil.move(file_path, dest)
+                    logger.info(f"Archived {file_path.name}")
 
-                self.app.processed_files.discard(file_path.name)
-            except Exception as e:
-                logger.error(f"Failed to archive {file_path.name}: {e}")
+                    self.app.processed_files.discard(file_path.name)
+                except Exception as e:
+                    logger.error(f"Failed to archive {file_path.name}: {e}")
 
     def handle_review(self, file_path, supplier, items, match_results, mode):
-        # No -> check working mode
-        if mode.lower() == "auto":
-            # Move the file
-            shutil.move(file_path, settings.review_dir / file_path.name)
-            # Remove the file name from the set
-            self.app.processed_files.discard(file_path.name)
-        else:
-            logger.info(f"Requesting user review for {file_path.name}")
+        with task_scope(f"Requesting Review: {file_path.name}"):
+            # No -> check working mode
+            if mode.lower() == "auto":
+                # Move the file
+                shutil.move(file_path, settings.review_dir / file_path.name)
+                # Remove the file name from the set
+                self.app.processed_files.discard(file_path.name)
+            else:
+                logger.info(f"Requesting user review for {file_path.name}")
 
-            # 1. Move to Review folder
-            review_path = settings.review_dir / file_path.name
-            try:
-                shutil.move(file_path, review_path)
-            except Exception as e:
-                logger.error(f"Failed to move file to review: {e}")
-                return
+                # 1. Move to Review folder
+                review_path = settings.review_dir / file_path.name
+                try:
+                    shutil.move(file_path, review_path)
+                except Exception as e:
+                    logger.error(f"Failed to move file to review: {e}")
+                    return
 
-            # 2. Format the data
-            stats, rows = prepare_review_data(items, match_results)
+                # 2. Format the data
+                stats, rows = prepare_review_data(items, match_results)
 
-            # 3. Stash the data in the App
-            self.app.current_review_payload = {
-                "supplier": supplier,
-                "rows": rows,
-                "stats": stats,
-            }
-            self.app.needs_review = True
+                # 3. Stash the data in the App
+                self.app.current_review_payload = {
+                    "supplier": supplier,
+                    "rows": rows,
+                    "stats": stats,
+                }
+                self.app.needs_review = True
 
-            # 4. Clear the flag so we can wait on it
-            self.app.user_event.clear()
+                # 4. Clear the flag so we can wait on it
+                self.app.user_event.clear()
 
-            # 5. Wait for human confirmation
-            self.app.user_event.wait()
+                # 5. Wait for human confirmation
+                self.app.user_event.wait()
 
-            # 6. Clean up
-            self.app.current_review_payload = None
-            self.app.needs_review = False
+                # 6. Clean up
+                self.app.current_review_payload = None
+                self.app.needs_review = False
 
-            # 7. Move back to Input
-            input_path = settings.input_dir / file_path.name
-            try:
-                shutil.move(review_path, input_path)
-                logger.info(f"Moved {file_path.name} back to Input for re-processing")
-            except Exception as e:
-                logger.error(f"Failed to move file back to Input: {e}")
+                # 7. Move back to Input
+                input_path = settings.input_dir / file_path.name
+                try:
+                    shutil.move(review_path, input_path)
+                    logger.info(f"Moved {file_path.name} back to Input for re-processing")
+                except Exception as e:
+                    logger.error(f"Failed to move file back to Input: {e}")
 
-            # 8. Allow re-processing
-            self.app.processed_files.discard(file_path.name)
+                # 8. Allow re-processing
+                self.app.processed_files.discard(file_path.name)
