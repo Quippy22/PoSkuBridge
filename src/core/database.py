@@ -120,6 +120,107 @@ class Database:
         finally:
             conn.close()
 
+    def get_registry_page(self, page: int, page_size: int, query: str = None, search_col: str = "description") -> pd.DataFrame:
+        """Returns a single page of registry data, optionally filtered by search."""
+        conn = self._get_connection()
+        try:
+            offset = (page - 1) * page_size
+            
+            # 1. Handle SQL Prefix Search (Optimized)
+            if query and search_col in ["warehouse_code", "description"]:
+                filter_sql = f"WHERE products.{search_col} LIKE '%{query}%' "
+                
+                sql = f"""
+                    SELECT p.*, m.*
+                    FROM (
+                        SELECT * FROM products 
+                        {filter_sql}
+                        LIMIT {page_size} OFFSET {offset}
+                    ) as p
+                    LEFT JOIN mappings m ON p.warehouse_code = m.warehouse_code
+                """
+                df = pd.read_sql(sql, conn)
+                df = df.loc[:, ~df.columns.duplicated()]
+                return df
+
+            # 2. Handle 'All' or empty (Fuzzy or Full)
+            # If 'all', we currently have to fetch more to fuzzy match correctly,
+            # or just do a simple search across joined tables.
+            # To keep it simple and 'production grade', we'll use a search across all columns.
+            if query and search_col == "all":
+                # Get all columns from mappings to search in them too
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA table_info(mappings)")
+                mapping_cols = [row["name"] for row in cursor.fetchall() if row["name"] != "warehouse_code"]
+                
+                mapping_filters = " OR ".join([f"m.{col} LIKE '%{query}%'" for col in mapping_cols])
+                filter_sql = f"WHERE p.warehouse_code LIKE '%{query}%' OR p.description LIKE '%{query}%'"
+                if mapping_filters:
+                    filter_sql += f" OR {mapping_filters}"
+
+                # For 'all', we might need to join first then filter
+                sql = f"""
+                    SELECT p.*, m.*
+                    FROM products p
+                    LEFT JOIN mappings m ON p.warehouse_code = m.warehouse_code
+                    {filter_sql}
+                    LIMIT {page_size} OFFSET {offset}
+                """
+            else:
+                # Default: just fetch page
+                sql = f"""
+                    SELECT p.*, m.*
+                    FROM (
+                        SELECT * FROM products 
+                        LIMIT {page_size} OFFSET {offset}
+                    ) as p
+                    LEFT JOIN mappings m ON p.warehouse_code = m.warehouse_code
+                """
+            
+            df = pd.read_sql(sql, conn)
+            df = df.loc[:, ~df.columns.duplicated()]
+            return df
+        finally:
+            conn.close()
+
+    def get_total_count(self, query: str = None, search_col: str = "description") -> int:
+        """Returns the total number of products (optionally filtered)."""
+        conn = self._get_connection()
+        try:
+            if query:
+                if search_col in ["warehouse_code", "description"]:
+                    filter_sql = f"WHERE {search_col} LIKE '%{query}%'"
+                elif search_col == "all":
+                    # Similar logic to get_page for counting
+                    cursor = conn.cursor()
+                    cursor.execute("PRAGMA table_info(mappings)")
+                    mapping_cols = [row["name"] for row in cursor.fetchall() if row["name"] != "warehouse_code"]
+                    
+                    mapping_filters = " OR ".join([f"m.{col} LIKE '%{query}%'" for col in mapping_cols])
+                    
+                    # We need a join for 'all' count
+                    count_sql = f"""
+                        SELECT COUNT(*) 
+                        FROM products p
+                        LEFT JOIN mappings m ON p.warehouse_code = m.warehouse_code
+                        WHERE p.warehouse_code LIKE '%{query}%' OR p.description LIKE '%{query}%'
+                    """
+                    if mapping_filters:
+                        count_sql += f" OR {mapping_filters}"
+                    
+                    cursor.execute(count_sql)
+                    return cursor.fetchone()[0]
+                else:
+                    filter_sql = ""
+            else:
+                filter_sql = ""
+                
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) FROM products {filter_sql}")
+            return cursor.fetchone()[0]
+        finally:
+            conn.close()
+
     def _ensure_supplier(self, supplier):
         """Dynamically adds a column for the supplier if it doesn't exist."""
         conn = self._get_connection()
