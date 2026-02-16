@@ -1,7 +1,7 @@
 import ttkbootstrap as ttk
 
 from src.core.settings import settings
-from src.gui.widgets.options_widgets import PathSelector, SliderSetting, ToggleSetting
+from src.gui.widgets.options_widgets import PathSelector, SliderSetting, ToggleSetting, DropdownSetting
 from src.lib.time import format_duration, parse_duration
 
 
@@ -135,10 +135,20 @@ class WorkflowSettings(ttk.Labelframe):
             self, "Keep the working mode after application close", self.var_keep_mode
         ).pack(fill="x", pady=5)
 
+        # -- Export Format --
+        self.var_export = ttk.StringVar(value=settings.export_format)
+        DropdownSetting(
+            self, 
+            "Export File Format", 
+            self.var_export, 
+            values=[".xls", ".xlsx", ".csv"]
+        ).pack(fill="x", pady=5)
+
     def save(self):
         settings.archive_processed_files = self.var_archive.get()
         settings.open_output_folder = self.var_open.get()
         settings.keep_working_mode = self.var_keep_mode.get()
+        settings.export_format = self.var_export.get()
 
     def is_modified(self):
         if settings.archive_processed_files != self.var_archive.get():
@@ -146,6 +156,8 @@ class WorkflowSettings(ttk.Labelframe):
         if settings.open_output_folder != self.var_open.get():
             return True
         if settings.keep_working_mode != self.var_keep_mode.get():
+            return True
+        if settings.export_format != self.var_export.get():
             return True
 
         return False

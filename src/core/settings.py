@@ -19,6 +19,7 @@ class Settings:
         "archive_processed_files": True,
         # After processing a file/batch of files open the output folder
         "open_output_folder": False,
+        "export_format": ".xlsx",
         # --- MATCHER ---
         # Switch to turn fuzzy matching ON or OFF
         "enable_fuzzy_match": False,
@@ -184,6 +185,22 @@ class Settings:
     @open_output_folder.setter
     def open_output_folder(self, value):
         self._data["open_output_folder"] = bool(value)
+
+    @property
+    def export_format(self) -> str:
+        return self._data.get("export_format", ".xlsx")
+
+    @export_format.setter
+    def export_format(self, value):
+        valid_formats = [".xls", ".xlsx", ".csv"]
+        val = str(value).lower()
+        if not val.startswith("."):
+            val = f".{val}"
+
+        if val in valid_formats:
+            self._data["export_format"] = val
+        else:
+            logger.error(f"Invalid export format: {value}. Must be one of {valid_formats}")
 
     @property
     def keep_working_mode(self) -> bool:

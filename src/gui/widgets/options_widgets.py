@@ -104,3 +104,22 @@ class SliderSetting(ttk.Frame):
             
         except ValueError:
             pass
+
+
+class DropdownSetting(ttk.Frame):
+    """A reusable row with text on the left and a dropdown on the right"""
+    def __init__(self, parent, label_text, variable, values):
+        super().__init__(parent)
+        
+        # 1. Label (Left)
+        ttk.Label(self, text=label_text).pack(side="left", anchor="center")
+
+        # 2. Dropdown (Right)
+        self.combo = ttk.Combobox(
+            self,
+            textvariable=variable,
+            values=values,
+            state="readonly",
+            width=10
+        )
+        self.combo.pack(side="right", anchor="center")
