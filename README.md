@@ -46,3 +46,13 @@ PoSkuBridge/
     ├── config.json            # Persistent user settings
     ├── Logs/                  # Application execution logs
     └── Backups/               # Automated database snapshots
+```
+---
+
+## 📜 Final Disclaimer
+
+This project was a major milestone in my journey learning Python and Git. It stands as a reminder of where I started—writing code that was questionable at best—and where I ended up.
+
+After countless iterations, multiple "let's delete everything and start over" moments, and one too many `--force` pushes that definitely made my commit history cry, I finally got the hang of general workflow rules. I found a savior in `uv`, which made package management actually enjoyable, and finally figured out how to properly structure a project.
+
+The app is now in a great state, it's fast, functional, and surprisingly stable. But like all good teachers, its job is done. This project is now **officially finished and archived**. It won't be receiving updates, but it served its purpose perfectly as a learning experience. 
