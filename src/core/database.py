@@ -12,7 +12,7 @@ class Database:
         self.path = settings.db_path
         self._initialize()
 
-    def add_product(self, warehouse_code, description):
+    def add_product(self, warehouse_code, description) -> bool:
         """Adds a new item to the products list AND initializes the mapping row."""
         conn = self._get_connection()
         try:
@@ -34,15 +34,18 @@ class Database:
 
             conn.commit()
             logger.info(f"Added product: {description}")
+            return True
 
         except sqlite3.IntegrityError:
             logger.warning(f"Product {warehouse_code} already exists")
+            return False
         except Exception as e:
             logger.error(f"Failed to add product: {e}")
+            return False
         finally:
             conn.close()
 
-    def add_mapping(self, supplier_name, supplier_sku, warehouse_code):
+    def add_mapping(self, supplier_name, supplier_sku, warehouse_code) -> bool:
         """Maps a Supplier SKU to an existing Warehouse Code."""
         # Ensure column exists first
         col_name = self._ensure_supplier(supplier_name)
@@ -55,14 +58,17 @@ class Database:
 
             if cursor.rowcount == 0:
                 logger.error(f"Cannot map to {warehouse_code}: Product not found.")
+                return False
             else:
                 conn.commit()
                 logger.info(
                     f"Mapped {supplier_name} [{supplier_sku}] -> {warehouse_code}"
                 )
+                return True
 
         except Exception as e:
             logger.error(f"Mapping save failed: {e}")
+            return False
         finally:
             conn.close()
 

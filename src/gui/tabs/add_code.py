@@ -9,7 +9,6 @@ class AddCodeRow(ttk.Frame):
     """A row for mapping a vendor to a SKU when adding a new product."""
 
     def __init__(self, parent, suppliers, on_remove):
-        # ttk.Frame does not accept pady in __init__, use pack/grid instead
         super().__init__(parent)
         self.on_remove = on_remove
 
@@ -140,31 +139,37 @@ class AddCode(ttk.Frame):
             self.mapping_rows.remove(row)
 
     def save_product(self):
+        """Saves product and mappings with validation"""
         code = self.code_var.get().strip()
         desc = self.desc_var.get().strip()
 
         if not code or not desc:
-            messagebox.showwarning(
-                "Validation Error", "Code and Description are required."
-            )
+            messagebox.showwarning("Validation Error", "Code and Description are required.")
             return
 
         # 1. Add Product
-        db.add_product(code, desc)
+        if not db.add_product(code, desc):
+            messagebox.showerror("Error", f"Could not add product {code}. It might already exist.")
+            return
 
         # 2. Add Mappings
+        failed_mappings = []
         for row in self.mapping_rows:
             vendor, sku = row.get_data()
             if vendor and sku:
-                db.add_mapping(vendor, sku, code)
+                if not db.add_mapping(vendor, sku, code):
+                    failed_mappings.append(vendor)
 
-        messagebox.showinfo("Success", f"Product {code} saved successfully.")
-
+        if failed_mappings:
+            messagebox.showwarning("Partial Success", f"Product saved, but mappings for {', '.join(failed_mappings)} failed.")
+        else:
+            messagebox.showinfo("Success", f"Product {code} saved successfully.")
+        
         # 3. Cleanup
         self.code_var.set("")
         self.desc_var.set("")
         for row in self.mapping_rows:
             row.destroy()
         self.mapping_rows.clear()
-
+        
         self.on_save_success()
