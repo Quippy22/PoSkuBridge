@@ -128,6 +128,7 @@ class RegistrySearch(ttk.Frame):
     def __init__(self, parent, on_search_callback):
         super().__init__(parent, padding=10)
         self.callback = on_search_callback
+        self._debounce_id = None
 
         # 1. Help label
         help_lbl = ttk.Label(
@@ -144,11 +145,20 @@ class RegistrySearch(ttk.Frame):
         )
 
         self.search_var = ttk.StringVar()
-        self.search_var.trace_add(
-            "write", lambda *args: self.callback(self.search_var.get())
-        )
+        self.search_var.trace_add("write", self._on_type)
 
         self.search_entry = ttk.Entry(
             self, textvariable=self.search_var, font=("Segoe UI", 11)
         )
         self.search_entry.pack(side="left", fill="x", expand=True)
+
+    def _on_type(self, *args):
+        """Cancels previous timer and starts a new 300ms one."""
+        if self._debounce_id:
+            self.after_cancel(self._debounce_id)
+
+        self._debounce_id = self.after(300, self._trigger_callback)
+
+    def _trigger_callback(self):
+        """Executes the search callback with the current query."""
+        self.callback(self.search_var.get())
