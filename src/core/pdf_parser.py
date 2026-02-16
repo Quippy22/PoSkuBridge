@@ -192,6 +192,18 @@ class PdfParser:
 
         self.po_table.columns = new_columns
 
+        # 1.5 Normalize common names
+        norm_map = {
+            "quantity": "qty",
+            "quantity.1": "qty",
+            "item": "description",
+            "desc": "description",
+            "part number": "sku",
+            "pn": "sku",
+            "ref": "sku",
+        }
+        self.po_table.rename(columns=norm_map, inplace=True)
+
         # 2. Drop price/total
         cols_to_drop = [
             c
