@@ -1,7 +1,69 @@
 import ttkbootstrap as ttk
 
+from src.core.logger import get_current_task
 from src.core.settings import settings
-from src.gui.tabs import Dashboard, Registry, Review, AddCode
+from src.gui.options import SettingsWindow
+from src.gui.tabs import AddCode, Dashboard, Registry, Review
+
+
+class StatusBar(ttk.Frame):
+    """Global status bar for active processes and system controls."""
+
+    def __init__(self, parent, backend):
+        super().__init__(parent, padding=(10, 2), bootstyle="secondary")
+        self.parent = parent
+        self.backend = backend
+
+        # 1. Active Process Label (Left)
+        self.label = ttk.Label(
+            self,
+            text="Active Process: Ready",
+            font=("Segoe UI", 10),
+            bootstyle="inverse-secondary",
+        )
+        self.label.pack(side="left", pady=5)
+
+        # 2. Controls (Right)
+        # Style for the buttons
+        style = ttk.Style()
+        style.configure(
+            "Exit.danger.TButton", font=("Segoe UI", 9, "bold"), padding=(10, 2)
+        )
+        style.configure(
+            "Settings.secondary.TButton", font=("Segoe UI", 9), padding=(10, 2)
+        )
+
+        # Exit Button
+        self.exit_btn = ttk.Button(
+            self,
+            text="Exit",
+            style="Exit.danger.TButton",
+            command=self.exit_app,
+            width=6,
+        )
+        self.exit_btn.pack(side="right", padx=(5, 0))
+
+        # Settings Button
+        self.settings_btn = ttk.Button(
+            self,
+            text="Settings",
+            style="Settings.secondary.TButton",
+            command=self.open_settings,
+            width=8,
+        )
+        self.settings_btn.pack(side="right", padx=5)
+
+    def set_task(self, task_name):
+        self.label.config(text=f"Active Process: {task_name}")
+
+    def exit_app(self):
+        self.backend.exit()
+        self.parent.after(0, self.parent.destroy())
+        self.parent.quit()
+
+    def open_settings(self):
+        settings_window = SettingsWindow(self.parent)
+        settings_window.grab_set()
 
 
 class GUI(ttk.Window):
@@ -13,7 +75,7 @@ class GUI(ttk.Window):
         self.backend = backend
 
         self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True, padx=5, pady=5)
+        self.notebook.pack(fill="both", expand=True, padx=5, pady=(5, 0))
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
         # Tab 1: Dashboard
@@ -27,13 +89,28 @@ class GUI(ttk.Window):
 
         # Tab 3: Add Code (Not added to notebook yet)
         self.addCodeTab = AddCode(
-            self.notebook, 
+            self.notebook,
             on_save_success=self.registryTab.refresh_data,
-            on_close=self.close_add_code
+            on_close=self.close_add_code,
         )
+
+        # -- The Global Status Bar --
+        self.status_bar = StatusBar(self, backend)
+        self.status_bar.pack(side="bottom", fill="x")
 
         # Tab 4: Mappings (Auto-appearing)
         self._check_worker()
+        self._update_status()
+
+    def _update_status(self):
+        """Pulls the current task from the logger and updates UI."""
+        if self.backend.needs_review:
+            self.status_bar.set_task("Reviewing order")
+        else:
+            task = get_current_task()
+            self.status_bar.set_task(task)
+
+        self.after(200, self._update_status)
 
     def open_add_code(self):
         """Adds and switches to the Add Code tab if not present."""
@@ -64,7 +141,7 @@ class GUI(ttk.Window):
         selected_tab = self.notebook.select()
         if not selected_tab:
             return
-            
+
         tab_text = self.notebook.tab(selected_tab, "text")
 
         if tab_text == "Registry":

@@ -138,7 +138,7 @@ class Review(ttk.Labelframe):
         df = db.get_products()
         # Ensure we don't have misaligned lists
         df = df.dropna(subset=["warehouse_code", "description"])
-        
+
         codes = df["warehouse_code"].astype(str).tolist()
         descriptions = df["description"].astype(str).tolist()
 
@@ -169,15 +169,15 @@ class Review(ttk.Labelframe):
             # Notify user
             messagebox.showwarning(
                 "Incomplete review",
-                f"You have{len(unconfirmed_rows)} items left to review.\n\nPlease confirm all matches before saving."
+                f"You have{len(unconfirmed_rows)} items left to review.\n\nPlease confirm all matches before saving.",
             )
             return
-            
+
         invalid_rows = []
         mappings = []
         for r in self.rows:
             code, sku = r.get_mapping()
-            
+
             if not code or not code.strip():
                 invalid_rows.append(sku)
             else:
@@ -186,10 +186,10 @@ class Review(ttk.Labelframe):
         if invalid_rows:
             messagebox.showerror(
                 "Missing Codes",
-                f"The following confirmed items have no warehouse code:\n\n{', '.join(invalid_rows[:5])}..."
+                f"The following confirmed items have no warehouse code:\n\n{', '.join(invalid_rows[:5])}...",
             )
             return
-        
+
         try:
             if mappings:
                 save_mappings_batch(self.supplier, mappings)

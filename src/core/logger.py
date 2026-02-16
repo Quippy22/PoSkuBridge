@@ -7,6 +7,7 @@ from src.core.settings import settings
 
 # The queue for the GUI to read from
 log_queue = queue.Queue()
+_current_task = "Ready"
 
 
 def indent_patcher(record):
@@ -68,19 +69,27 @@ def get_next_log():
         return None
 
 
+def get_current_task():
+    return _current_task
+
+
 @contextmanager
 def task_scope(task_name):
     """
     Creates a visual "chunk" in the logs.
     All logs inside the scope will be indented.
     """
+    global _current_task
+    old_task = _current_task
+    _current_task = task_name
+
     logger.info(f"Task started: {task_name}")
 
     # contextualize
     with logger.contextualize(indent=True):
         try:
             yield
-        except Exception as e:
-            logger.error(f"Task {task_name} failed: {e}")
+        finally:
+            _current_task = old_task
 
     logger.info(f"Task completed: {task_name}")

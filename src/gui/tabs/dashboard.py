@@ -2,8 +2,6 @@ import ttkbootstrap as ttk
 
 from loguru import logger
 
-from src.gui.options import SettingsWindow
-
 from src.core.logger import get_next_log
 from src.core.settings import settings
 
@@ -200,73 +198,6 @@ class ModeSwitcher(ttk.Labelframe):
                 btn.configure(cursor="hand2")
 
 
-class StatusBar(ttk.Labelframe):
-    def __init__(self, parent):
-        super().__init__(parent, text="Active Process", bootstyle="secondary")
-
-        self.label = ttk.Label(
-            self,
-            text="Ready",
-            font=("Segoe UI", 12),
-            bootstyle="inverse-secondary",
-            anchor="w",
-        )
-        self.label.pack(fill="both", padx=5, pady=2)
-
-    def set_text(self, message):
-        self.label.config(text=message)
-
-
-class ControlPanel(ttk.Frame):
-    def __init__(self, parent, backend):
-        super().__init__(parent)
-
-        self.parent = parent
-        self.backend = backend
-        # Custom style for the buttons to reduce the font size
-        style = ttk.Style()
-        style.configure(
-            "Exit.danger.TButton", font=("Segoe UI", 10, "bold"), padding=(10, 2)
-        )
-        style.configure(
-            "Settings.secondary.TButton", font=("Segoe UI", 10), padding=(10, 2)
-        )
-
-        # Exit Button
-        self.exit_btn = ttk.Button(
-            self,
-            text="Exit",
-            style="Exit.danger.TButton",
-            command=self.exit,
-            width=6
-        )
-        self.exit_btn.pack(side="right", padx=(5, 0))
-
-        # Settings Button
-        self.settings_btn = ttk.Button(
-            self,
-            text="Settings",
-            style="Settings.secondary.TButton",
-            command=self.open_settings,
-            width=6,
-        )
-        self.settings_btn.pack(side="left", padx=5)
-
-    def exit(self):
-        # Stop the threads
-        self.backend.exit()
-
-        # Destroy the UI
-        self.parent.after(0, self.parent.destroy())
-        self.parent.quit()
-
-
-    def open_settings(self):
-        settings_window = SettingsWindow(self)
-        # Prevent the user from clicking the main window
-        settings_window.grab_set()
-
-
 class Dashboard(ttk.Frame):
     def __init__(self, parent, backend):
         super().__init__(parent)
@@ -289,19 +220,3 @@ class Dashboard(ttk.Frame):
         # 2. Mode Switcher (Stacked Top, right underneath)
         self.mode_buttons = ModeSwitcher(self.right_panel)
         self.mode_buttons.pack(side="top", fill="x")
-
-        # -- LAYER 2: The Footer --
-        self.bottom_bar = ttk.Frame(self)
-        self.bottom_bar.pack(side="bottom", fill="x", padx=10, pady=(0, 2))
-
-        for i in range(5):
-            self.bottom_bar.columnconfigure(i, weight=1)
-        self.bottom_bar.columnconfigure(5, weight=0)
-
-        # -- The Status Bar --
-        self.status_bar = StatusBar(self.bottom_bar)
-        self.status_bar.grid(row=0, column=0, columnspan=5, sticky="sew")
-
-        # -- Settings & Exit Buttons --
-        self.controls = ControlPanel(self.bottom_bar, backend)
-        self.controls.grid(row=0, column=5, sticky="se", padx=(10, 0))

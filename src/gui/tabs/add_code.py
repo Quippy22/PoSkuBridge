@@ -1,5 +1,7 @@
-import ttkbootstrap as ttk
 from tkinter import messagebox
+
+import ttkbootstrap as ttk
+
 from src.core.database import database as db
 
 
@@ -14,7 +16,11 @@ class AddCodeRow(ttk.Frame):
         # Vendor Dropdown
         self.vendor_var = ttk.StringVar()
         self.vendor_combo = ttk.Combobox(
-            self, textvariable=self.vendor_var, values=suppliers, state="readonly", width=20
+            self,
+            textvariable=self.vendor_var,
+            values=suppliers,
+            state="readonly",
+            width=20,
         )
         self.vendor_combo.pack(side="left", padx=(0, 10), pady=5)
 
@@ -25,7 +31,11 @@ class AddCodeRow(ttk.Frame):
 
         # Remove Button
         ttk.Button(
-            self, text="×", bootstyle="danger-outline", width=3, command=self.destroy_row
+            self,
+            text="×",
+            bootstyle="danger-outline",
+            width=3,
+            command=self.destroy_row,
         ).pack(side="left", pady=5)
 
     def destroy_row(self):
@@ -67,13 +77,21 @@ class AddCode(ttk.Frame):
         info_frame = ttk.Labelframe(self, text="Product Information", padding=15)
         info_frame.pack(side="top", fill="x", pady=(0, 20))
 
-        ttk.Label(info_frame, text="Warehouse Code:").grid(row=0, column=0, sticky="w", pady=5)
+        ttk.Label(info_frame, text="Warehouse Code:").grid(
+            row=0, column=0, sticky="w", pady=5
+        )
         self.code_var = ttk.StringVar()
-        ttk.Entry(info_frame, textvariable=self.code_var, width=40).grid(row=0, column=1, sticky="w", padx=10)
+        ttk.Entry(info_frame, textvariable=self.code_var, width=40).grid(
+            row=0, column=1, sticky="w", padx=10
+        )
 
-        ttk.Label(info_frame, text="Description:").grid(row=1, column=0, sticky="w", pady=5)
+        ttk.Label(info_frame, text="Description:").grid(
+            row=1, column=0, sticky="w", pady=5
+        )
         self.desc_var = ttk.StringVar()
-        ttk.Entry(info_frame, textvariable=self.desc_var, width=60).grid(row=1, column=1, sticky="w", padx=10)
+        ttk.Entry(info_frame, textvariable=self.desc_var, width=60).grid(
+            row=1, column=1, sticky="w", padx=10
+        )
 
         # 2. Mappings List
         map_frame = ttk.Labelframe(self, text="Supplier Mappings", padding=15)
@@ -84,10 +102,10 @@ class AddCode(ttk.Frame):
 
         # Plus button
         ttk.Button(
-            map_frame, 
-            text="+ Add Mapping", 
-            bootstyle="secondary-outline", 
-            command=self.add_mapping_row
+            map_frame,
+            text="+ Add Mapping",
+            bootstyle="secondary-outline",
+            command=self.add_mapping_row,
         ).pack(side="top", anchor="w", pady=10)
 
         # 3. Actions
@@ -96,20 +114,20 @@ class AddCode(ttk.Frame):
 
         # Save Button (Right)
         ttk.Button(
-            action_frame, 
-            text="Save Product", 
-            bootstyle="success", 
-            width=20, 
-            command=self.save_product
+            action_frame,
+            text="Save Product",
+            bootstyle="success",
+            width=20,
+            command=self.save_product,
         ).pack(side="right")
 
         # Close Button (Next to Save)
         ttk.Button(
-            action_frame, 
-            text="Close", 
-            bootstyle="secondary-outline", 
-            width=10, 
-            command=self.on_close
+            action_frame,
+            text="Close",
+            bootstyle="secondary-outline",
+            width=10,
+            command=self.on_close,
         ).pack(side="right", padx=10)
 
     def add_mapping_row(self):
@@ -126,7 +144,9 @@ class AddCode(ttk.Frame):
         desc = self.desc_var.get().strip()
 
         if not code or not desc:
-            messagebox.showwarning("Validation Error", "Code and Description are required.")
+            messagebox.showwarning(
+                "Validation Error", "Code and Description are required."
+            )
             return
 
         # 1. Add Product
@@ -139,12 +159,12 @@ class AddCode(ttk.Frame):
                 db.add_mapping(vendor, sku, code)
 
         messagebox.showinfo("Success", f"Product {code} saved successfully.")
-        
+
         # 3. Cleanup
         self.code_var.set("")
         self.desc_var.set("")
         for row in self.mapping_rows:
             row.destroy()
         self.mapping_rows.clear()
-        
+
         self.on_save_success()
