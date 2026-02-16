@@ -70,7 +70,7 @@
     - **Red/Yellow:** Editable Autocomplete Combobox connected to `products` table.
     - **Green:** Read-only view.
 - [x] **Catalog Search:** "Magnifying Glass" popup to fuzzy search the `products` table (replacing the need to open Excel).
-- [ ] **Commit Logic:**
+- [x] **Commit Logic:**
     - **Write-Back:** Insert new confirmed mappings into the `mappings` table via `save_mapping`.
     - **Export:** Generate the final WMS-ready `.xlsx` or `.csv`.
 

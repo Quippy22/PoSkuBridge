@@ -1,15 +1,9 @@
 import pandas as pd
 from loguru import logger
-<<<<<<< HEAD
-
-from src.core.logger import task_scope
-from src.core.settings import settings
-=======
 from pathlib import Path
 
 from src.core.settings import settings
 from src.core.logger import task_scope
->>>>>>> 16ae141 (core: add exporter)
 
 
 class Exporter:
@@ -23,17 +17,10 @@ class Exporter:
         Exports the dataframe to the configured format.
         """
         fmt = settings.export_format.lower()
-<<<<<<< HEAD
 
         # 1. Prepare path
         export_path = self.output_dir / filename
-
-=======
         
-        # 1. Prepare path
-        export_path = self.output_dir / filename
-        
->>>>>>> 16ae141 (core: add exporter)
         # Ensure correct extension
         if not export_path.suffix == fmt:
             export_path = export_path.with_suffix(fmt)

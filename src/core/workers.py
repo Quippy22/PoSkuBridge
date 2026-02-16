@@ -7,11 +7,12 @@ from typing import Any
 from loguru import logger
 
 from src.core.backup import backup
+from src.core.exporter import Exporter
 from src.core.logger import task_scope
 from src.core.matcher import fuzzy_match, green_check
 from src.core.pdf_parser import PdfParser
 from src.core.settings import settings
-from src.lib.data import prepare_review_data
+from src.lib.data import prepare_review_data, prepare_export_data
 
 
 class BasicThread(threading.Thread):
@@ -84,6 +85,7 @@ class Archivist(BasicThread):
 class Worker(BasicThread):
     def __init__(self, app):
         super().__init__(app, "Worker")
+        self.exporter = Exporter()
 
     def cycle(self):
         mode = settings.working_mode
@@ -120,19 +122,20 @@ class Worker(BasicThread):
 
                 # Check for all green status
                 if green_check(match_results):
-                    self.handle_green(file_path, supplier, match_results)
+                    self.handle_green(file_path, supplier, items, match_results)
                 else:
                     self.handle_review(file_path, supplier, items, match_results, mode)
 
             except Exception as e:
                 logger.error(f"Worker failed processing {file_path.name}: {e}")
 
-    def handle_green(self, file_path, supplier, match_results):
+    def handle_green(self, file_path, supplier, items, match_results):
         with task_scope(f"Archiving {file_path.name}"):
-            # Yes -> export the file
-            logger.info(f"Auto-exporting {file_path.name}")
+            # 1. Export Data
+            export_df = prepare_export_data(items, match_results)
+            self.exporter.run(export_df, file_path.stem)
 
-            # Archive the file after it was processed
+            # 2. Archive
             if settings.archive_processed_files:
                 try:
                     dest = settings.archive_dir / file_path.name
