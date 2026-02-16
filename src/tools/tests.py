@@ -74,3 +74,34 @@ def matcher_test():
         print(f"Added: {sku} -> {internal_code}")
 
     print("Done.")
+
+def registry_stress_test():
+    """Populates the database with a large amount of data for UI testing."""
+    from faker import Faker
+    fake = Faker()
+    
+    print("\n--- 🧪 STARTING REGISTRY STRESS TEST ---")
+    
+    suppliers = ["Logitech", "Razer", "Dell", "HP", "Apple", "Samsung", "Asus", "MSI", "Corsair", "SteelSeries"]
+    
+    # Add 500 products
+    count = 500
+    print(f"Generating {count} products and mappings for {len(suppliers)} suppliers...")
+    
+    for i in range(1, count + 1):
+        wcd = f"WCD-{i:04d}"
+        desc = f"{fake.color_name()} {fake.catch_phrase()}"
+        
+        db.add_product(wcd, desc)
+        
+        # Add mappings for random suppliers
+        for supplier in suppliers:
+            # 70% chance to have a mapping for this supplier
+            if fake.boolean(chance_of_getting_true=70):
+                sku = f"{supplier[:3].upper()}-{fake.bothify(text='??-###-##')}"
+                db.add_mapping(supplier, sku, wcd)
+        
+        if i % 50 == 0:
+            print(f"Processed {i}/{count} items...")
+
+    print("✅ Registry stress test complete")
