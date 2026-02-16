@@ -99,6 +99,27 @@ class Database:
         finally:
             conn.close()
 
+    def get_registry_data(self) -> pd.DataFrame:
+        """Returns the full combined table of products and all their supplier mappings."""
+        conn = self._get_connection()
+        try:
+            # 1. Get all products
+            products_df = pd.read_sql("SELECT * FROM products", conn)
+
+            # 2. Get all mappings
+            mappings_df = pd.read_sql("SELECT * FROM mappings", conn)
+
+            # 3. Merge them on warehouse_code
+            # Since mappings has warehouse_code as PK and matches products,
+            # a simple left join ensures we see all products even if they have no mappings yet
+            merged_df = pd.merge(
+                products_df, mappings_df, on="warehouse_code", how="left"
+            )
+
+            return merged_df
+        finally:
+            conn.close()
+
     def _ensure_supplier(self, supplier):
         """Dynamically adds a column for the supplier if it doesn't exist."""
         conn = self._get_connection()
