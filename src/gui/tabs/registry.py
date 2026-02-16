@@ -1,41 +1,83 @@
+import math
 import tkinter as tk
-import ttkbootstrap as ttk
-from rapidfuzz import process, fuzz
-import pandas as pd
 
-from src.gui.widgets.registry_widgets import RegistryRow, RegistryHeader, RegistrySearch
+import pandas as pd
+import ttkbootstrap as ttk
+from rapidfuzz import fuzz, process
+
+from src.core.database import database as db
+from src.gui.widgets.registry_widgets import (
+    RegistryHeader,
+    RegistryPagination,
+    RegistryRow,
+    RegistrySearch,
+)
+from src.lib.data import prepare_registry_data
 
 
 class Registry(ttk.Frame):
-    """The main Registry tab orchestrating search, headers, and data view."""
-
     def __init__(self, parent, backend):
         super().__init__(parent)
         self.backend = backend
         self.data = pd.DataFrame()
+        self.filtered_data = pd.DataFrame()
+
+        # Pagination
+        self.current_page = 1
+        self.page_size = 50
 
         self._setup_ui()
         self.refresh_data()
 
     def _setup_ui(self):
-        # 1. Search Component
-        self.search_bar = RegistrySearch(self, on_search_callback=self.perform_search)
-        self.search_bar.pack(side="top", fill="x")
+        # 1. Controls Container
+        self.controls_frame = ttk.Frame(self, padding=10)
+        self.controls_frame.pack(side="top", fill="x")
 
-        # 2. Main Container for Data (Canvas + Scrollbars)
+        # 2. Pagination & Refresh (Pack first on the right to ensure it fits)
+        self.nav_frame = ttk.Frame(self.controls_frame)
+        self.nav_frame.pack(side="right", padx=(15, 0))
+
+        self.refresh_btn = ttk.Button(
+            self.nav_frame,
+            text="Refresh",
+            bootstyle="info-outline",
+            command=self.refresh_data,
+        )
+        self.refresh_btn.pack(side="left", padx=(0, 10))
+
+        self.pagination = RegistryPagination(
+            self.nav_frame, on_page_change=self.change_page
+        )
+        self.pagination.pack(side="left")
+
+        # 3. Search (Pack second to fill remaining space)
+        self.search_bar = RegistrySearch(
+            self.controls_frame, on_search_callback=self.on_search_triggered
+        )
+        self.search_bar.pack(side="left", fill="x", expand=True)
+
+        # 4. Data Canvas
         self.container = ttk.Frame(self)
         self.container.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        # Canvas for both Header and Rows to sync horizontal scroll
         self.canvas = ttk.Canvas(self.container, highlightthickness=0)
+
+        # Scrollbars
         self.v_scrollbar = ttk.Scrollbar(
-            self.container, orient=tk.VERTICAL, command=self.canvas.yview, bootstyle="primary-round"
+            self.container,
+            orient=tk.VERTICAL,
+            command=self.canvas.yview,
+            bootstyle="primary-round",
         )
         self.h_scrollbar = ttk.Scrollbar(
-            self.container, orient=tk.HORIZONTAL, command=self.canvas.xview, bootstyle="primary-round"
+            self.container,
+            orient=tk.HORIZONTAL,
+            command=self.canvas.xview,
+            bootstyle="primary-round",
         )
 
-        # Layout using grid for precise placement of scrollbars
+        # Layout
         self.canvas.grid(row=0, column=0, sticky="nsew")
         self.v_scrollbar.grid(row=0, column=1, sticky="ns")
         self.h_scrollbar.grid(row=1, column=0, sticky="ew")
@@ -43,39 +85,36 @@ class Registry(ttk.Frame):
         self.container.columnconfigure(0, weight=1)
         self.container.rowconfigure(0, weight=1)
 
-        # Configure Canvas
         self.canvas.configure(
-            yscrollcommand=self.v_scrollbar.set,
-            xscrollcommand=self.h_scrollbar.set
+            yscrollcommand=self.v_scrollbar.set, xscrollcommand=self.h_scrollbar.set
         )
 
-        # Content Frame inside Canvas
+        # Scroll Frame
         self.scroll_frame = ttk.Frame(self.canvas)
         self.canvas_window = self.canvas.create_window(
             (0, 0), window=self.scroll_frame, anchor="nw"
         )
 
-        # 3. Header and Row holders inside the scroll_frame
+        # Header & Rows holders
         self.header_holder = ttk.Frame(self.scroll_frame)
         self.header_holder.pack(side="top", fill="x")
 
         self.rows_holder = ttk.Frame(self.scroll_frame)
         self.rows_holder.pack(side="top", fill="x")
 
-        # Bindings for scrolling
         self.scroll_frame.bind(
             "<Configure>",
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
         )
 
     def refresh_data(self):
-        """Fetches fresh data and updates UI."""
-        self.data = self.backend.database.get_registry_data()
+        """Fetches fresh data"""
+        self.data = db.get_registry_data()
         self._update_headers()
-        self.perform_search("")
+        self.perform_search(self.search_bar.search_var.get())
 
     def _update_headers(self):
-        """Updates the dynamic header based on current data columns."""
+        """Rebuilds header based on columns"""
         for widget in self.header_holder.winfo_children():
             widget.destroy()
 
@@ -83,83 +122,91 @@ class Registry(ttk.Frame):
             header = RegistryHeader(self.header_holder, self.data.columns)
             header.pack(fill="x")
 
+    def on_search_triggered(self, query):
+        """Resets pagination on new search"""
+        self.current_page = 1
+        self.perform_search(query)
+
+    def change_page(self, delta):
+        """Handles page navigation"""
+        total_pages = max(1, math.ceil(len(self.filtered_data) / self.page_size))
+        new_page = self.current_page + delta
+
+        if 1 <= new_page <= total_pages:
+            self.current_page = new_page
+            self._display_results()
+
     def perform_search(self, query):
-        """Logic for filtering data based on search query and prefixes."""
+        """Filters data by fuzzy matching"""
         query = query.strip()
 
         if not query:
-            self._display_results(self.data)
-            return
-
-        # Handle prefixes
-        search_col = "description"  # Default
-        actual_query = query
-
-        if query.startswith("@wcd"):
-            search_col = "warehouse_code"
-            actual_query = query[4:].strip()
-        elif query.startswith("@desc"):
-            search_col = "description"
-            actual_query = query[5:].strip()
-        elif query.startswith("@sku"):
-            search_col = "all"
-            actual_query = query[4:].strip()
-
-        if not actual_query:
-            self._display_results(self.data)
-            return
-
-        # Prepare search series
-        if search_col == "all":
-            search_series = self.data.apply(
-                lambda row: " ".join(row.values.astype(str)), axis=1
-            )
+            self.filtered_data = self.data
         else:
-            target = search_col if search_col in self.data.columns else "description"
-            search_series = self.data[target].astype(str)
+            # 1. Parse prefix
+            search_col = "description"  # Default
+            actual_query = query
 
-        # RapidFuzz search
-        results = process.extract(
-            actual_query, search_series, scorer=fuzz.partial_ratio, limit=100
-        )
+            if query.startswith("@wcd"):
+                search_col = "warehouse_code"
+                actual_query = query[4:].strip()
+            elif query.startswith("@desc"):
+                search_col = "description"
+                actual_query = query[5:].strip()
+            elif query.startswith("@sku"):
+                search_col = "all"
+                actual_query = query[4:].strip()
 
-        ordered_indices = [idx for res, score, idx in results if score > 40]
-        matched_df = self.data.iloc[ordered_indices]
+            if not actual_query:
+                self.filtered_data = self.data
+            else:
+                # 2. Select search column
+                if search_col == "all":
+                    search_series = self.data.apply(
+                        lambda row: " ".join(row.values.astype(str)), axis=1
+                    )
+                else:
+                    target = (
+                        search_col if search_col in self.data.columns else "description"
+                    )
+                    search_series = self.data[target].astype(str)
 
-        self._display_results(matched_df)
+                # 3. Match
+                results = process.extract(
+                    actual_query,
+                    search_series,
+                    scorer=fuzz.partial_ratio,
+                    limit=len(self.data),
+                )
 
-    def _display_results(self, df):
-        """Clears and repopulates the rows holder with new data."""
+                # 4. Filter
+                ordered_indices = [idx for res, score, idx in results if score > 40]
+                self.filtered_data = self.data.iloc[ordered_indices]
+
+        self._display_results()
+
+    def _display_results(self):
+        """Renders the current page of rows"""
         for widget in self.rows_holder.winfo_children():
             widget.destroy()
 
-        for i, (idx, row) in enumerate(df.iterrows()):
-            row_widget = RegistryRow(self.rows_holder, row.to_dict(), i + 1)
+        # 1. Slice data
+        start_idx = (self.current_page - 1) * self.page_size
+        end_idx = start_idx + self.page_size
+        page_df = self.filtered_data.iloc[start_idx:end_idx]
+
+        # 2. Update stats
+        total_pages = max(1, math.ceil(len(self.filtered_data) / self.page_size))
+        self.pagination.set_page_text(self.current_page, total_pages)
+
+        # 3. Prepare data
+        rows_data = prepare_registry_data(page_df)
+
+        # 4. Render rows
+        for i, row in enumerate(rows_data):
+            display_idx = start_idx + i + 1
+            row_widget = RegistryRow(self.rows_holder, row, display_idx)
             row_widget.pack(fill="x", pady=1)
 
-
-if __name__ == "__main__":
-    class MockDatabase:
-        def get_registry_data(self):
-            # Create a very wide dataframe to test horizontal scrolling
-            cols = {
-                "warehouse_code": [f"WCD{i:03d}" for i in range(1, 31)],
-                "description": [f"Long Product Description for Item {i} that should take some space" for i in range(1, 31)]
-            }
-            for v in range(1, 11): # 10 vendors
-                cols[f"vendor_{v}_sku"] = [f"V{v}-SKU-{i*100}" for i in range(1, 31)]
-            
-            return pd.DataFrame(cols)
-
-    class MockBackend:
-        def __init__(self):
-            self.database = MockDatabase()
-
-    app = ttk.Window(themename="darkly")
-    app.title("Registry Test - Dual Scrollbars")
-    app.geometry("1000x600")
-
-    registry = Registry(app, MockBackend())
-    registry.pack(fill="both", expand=True)
-
-    app.mainloop()
+        # 5. Reset scroll
+        self.canvas.yview_moveto(0)

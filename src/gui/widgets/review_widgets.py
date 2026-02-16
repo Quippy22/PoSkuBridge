@@ -238,7 +238,7 @@ class ReviewRow(ttk.Frame):
 
         # {sku, description, warehouse, flag, score}
         self.data = row_data
-        
+
         # Search takes all the extra space
         self.columnconfigure(1, weight=2, minsize=180)
         self.columnconfigure(2, weight=1)
@@ -255,11 +255,9 @@ class ReviewRow(ttk.Frame):
         if len(desc_text) > 90:
             desc_text = desc_text[:87] + "..."
 
-        ttk.Label(
-            self,
-            text=desc_text,
-            width=30
-        ).grid(row=0, column=1, sticky="ewn", padx=5)
+        ttk.Label(self, text=desc_text, width=30).grid(
+            row=0, column=1, sticky="ewn", padx=5
+        )
 
         # -- Search Box --
         if self.data.get("warehouse_code") is not None:
@@ -279,15 +277,13 @@ class ReviewRow(ttk.Frame):
         else:
             color = "danger"
 
-        ttk.Label(
-            self,
-            text="  ",
-            bootstyle=f"{color}-inverse"
-        ).grid(row=0, column=3, sticky="ewn", padx=5)
+        ttk.Label(self, text="  ", bootstyle=f"{color}-inverse").grid(
+            row=0, column=3, sticky="ewn", padx=5
+        )
 
         # -- Score --
         if flag != "green":
-            score_text = f"{int(row_data.get("score", 0))}%"
+            score_text = f"{int(row_data.get('score', 0))}%"
 
             ttk.Label(
                 self,
@@ -297,16 +293,14 @@ class ReviewRow(ttk.Frame):
             ).grid(row=0, column=4, padx=5, sticky="n")
 
         # -- Confirm Button --
-        self.is_confirmed = ttk.BooleanVar(
-            value=False if flag != "green" else True
-        )
+        self.is_confirmed = ttk.BooleanVar(value=False if flag != "green" else True)
 
         ttk.Checkbutton(
             self,
             variable=self.is_confirmed,
             text="Confirm",
             bootstyle="success",
-            command=self._toggle_search
+            command=self._toggle_search,
         ).grid(row=0, column=5, sticky="en", padx=5)
 
     def get_mapping(self) -> tuple[str, str]:
