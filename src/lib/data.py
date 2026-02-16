@@ -45,3 +45,27 @@ def prepare_registry_data(df: pd.DataFrame) -> list[dict]:
 
     # Ensure everything is string/readable
     return df.fillna("-").to_dict("records")
+
+
+def prepare_export_data(parsed_items: pd.DataFrame, matched_items: pd.DataFrame) -> pd.DataFrame:
+    """Extracts Warehouse Code and Quantity for final export."""
+    # 1. Normalize SKU for merging
+    items = parsed_items.copy()
+    items["sku"] = items["sku"].astype(str).str.strip()
+
+    matches = matched_items.copy()
+    matches["sku"] = matches["sku"].astype(str).str.strip()
+
+    # 2. Merge to get warehouse_code alongside qty
+    # matched_items should have [sku, warehouse_code, flag, score]
+    # parsed_items should have [qty, sku, description] (based on parser)
+    merged = pd.merge(items, matches[["sku", "warehouse_code"]], on="sku", how="left")
+
+    # 3. Filter only necessary columns for WSL format
+    # Basic WSL format usually is: Warehouse Code, Quantity
+    export_df = merged[["warehouse_code", "qty"]].copy()
+    
+    # Rename columns to standard names
+    export_df.columns = ["Warehouse Code", "Qty"]
+    
+    return export_df
