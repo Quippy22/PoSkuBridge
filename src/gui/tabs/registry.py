@@ -1,5 +1,6 @@
 import math
 import tkinter as tk
+import threading
 
 import pandas as pd
 import ttkbootstrap as ttk
@@ -132,11 +133,21 @@ class Registry(ttk.Frame):
         self.event_generate("<<OpenAddCode>>")
 
     def refresh_data(self):
-        """Clears cache and fetches current view"""
+        """Async refresh"""
         self._cache.clear()
-        self.total_count = db.get_total_count(self.last_query, self.last_search_col)
-        self.total_pages = max(1, math.ceil(self.total_count / self.page_size))
+        self.footer.pagination.prev_btn.config(state="disabled")
+        self.footer.pagination.next_btn.config(state="disabled")
         
+        def _fetch():
+            count = db.get_total_count(self.last_query, self.last_search_col)
+            self.after(0, self._on_count_ready, count)
+
+        threading.Thread(target=_fetch, daemon=True).start()
+
+    def _on_count_ready(self, count):
+        """Setup pagination after count"""
+        self.total_count = count
+        self.total_pages = max(1, math.ceil(self.total_count / self.page_size))
         self.current_page = 1
         self._load_and_display()
 
@@ -168,22 +179,35 @@ class Registry(ttk.Frame):
             self._load_and_display()
 
     def _load_and_display(self):
-        """Gets data (from cache or DB), displays it, and preloads neighbors"""
-        # 1. Get current page
-        df = self._get_page(self.current_page)
-        
-        # 2. Update Header (only if columns changed/first time)
+        """Starts async page fetch"""
+        # 1. Lock controls
+        self.footer.pagination.prev_btn.config(state="disabled")
+        self.footer.pagination.next_btn.config(state="disabled")
+
+        def _fetch():
+            df = self._get_page(self.current_page)
+            self.after(0, self._on_page_ready, df)
+
+        threading.Thread(target=_fetch, daemon=True).start()
+
+    def _on_page_ready(self, df):
+        """Renders page and unlocks UI"""
+        # 1. Update Header
         if not self.header_holder.winfo_children() and not df.empty:
             self._update_headers(df.columns)
 
-        # 3. Display
+        # 2. Display
         self._display_results(df)
         
-        # 4. Proactive Preloading (Next and Previous)
+        # 3. Unlock Pagination
+        self.footer.pagination.prev_btn.config(state="normal" if self.current_page > 1 else "disabled")
+        self.footer.pagination.next_btn.config(state="normal" if self.current_page < self.total_pages else "disabled")
+        
+        # 4. Preload neighbors
         if self.current_page + 1 <= self.total_pages:
-            self.after(50, lambda: self._get_page(self.current_page + 1))
+            threading.Thread(target=lambda: self._get_page(self.current_page + 1), daemon=True).start()
         if self.current_page - 1 >= 1:
-            self.after(50, lambda: self._get_page(self.current_page - 1))
+            threading.Thread(target=lambda: self._get_page(self.current_page - 1), daemon=True).start()
 
     def _get_page(self, page_num):
         """Returns a page from cache or fetches from DB"""
