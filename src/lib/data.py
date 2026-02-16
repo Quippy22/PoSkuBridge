@@ -36,3 +36,12 @@ def prepare_review_data(parsed_items: pd.DataFrame, matched_items: pd.DataFrame)
                         .to_dict("records")
 
     return stats, rows
+
+
+def prepare_registry_data(df: pd.DataFrame) -> list[dict]:
+    """Converts the database dataframe into a list of dicts for the registry rows"""
+    if df.empty:
+        return []
+
+    # Ensure everything is string/readable
+    return df.fillna("-").to_dict("records")
