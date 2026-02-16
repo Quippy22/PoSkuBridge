@@ -42,19 +42,18 @@ class Watcher(BasicThread):
         super().__init__(app, "Watcher")
 
     def cycle(self):
-        with task_scope("Scanning for files"):
-            try:
-                in_path = settings.input_dir
-                files = list(in_path.glob("*.pdf"))
+        try:
+            in_path = settings.input_dir
+            files = list(in_path.glob("*.pdf"))
 
-                for f in files:
-                    if f.name not in self.app.processed_files:
-                        logger.info(f"Found new file: {f.name}")
-                        self.app.file_queue.put(f)
-                        # Don't process a file twice
-                        self.app.processed_files.add(f.name)
-            except Exception as e:
-                logger.error(f"Watcher: {e}")
+            for f in files:
+                if f.name not in self.app.processed_files:
+                    logger.info(f"Found new file: {f.name}")
+                    self.app.file_queue.put(f)
+                    # Don't process a file twice
+                    self.app.processed_files.add(f.name)
+        except Exception as e:
+            logger.error(f"Watcher: {e}")
 
         if self.stop_event.wait(timeout=2):
             return

@@ -21,24 +21,23 @@ class PdfParser:
         self.po_table = None
 
     def run(self) -> tuple[str | None, pd.DataFrame | None]:
-        with task_scope(f"Parsing {self.file_path.name}"):
-            # Open the file
-            self._pdf_opener(str(self.file_path))
-            if self.pdf is None:
-                return None, None
-            # Search for supplier
-            self._obtain_supplier()
-            # Get the table
-            self._extract_table()
-            if self.po_table is None:
-                logger.error("Could not detect table")
-                return self.supplier, None
+        # Open the file
+        self._pdf_opener(str(self.file_path))
+        if self.pdf is None:
+            return None, None
+        # Search for supplier
+        self._obtain_supplier()
+        # Get the table
+        self._extract_table()
+        if self.po_table is None:
+            logger.error("Could not detect table")
+            return self.supplier, None
 
-            # If the table isn't empty, clean the data
-            self._clean_table()
+        # If the table isn't empty, clean the data
+        self._clean_table()
 
-            # Return the supplier and table as a tuple
-            return self.supplier, self.po_table
+        # Return the supplier and table as a tuple
+        return self.supplier, self.po_table
 
     def _pdf_opener(self, file_path):
         try:

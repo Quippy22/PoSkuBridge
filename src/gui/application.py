@@ -10,16 +10,18 @@ class StatusBar(ttk.Frame):
     """Global status bar for active processes and system controls."""
 
     def __init__(self, parent, backend):
-        super().__init__(parent, padding=(10, 2), bootstyle="secondary")
+        super().__init__(parent, padding=(10, 2))
         self.parent = parent
         self.backend = backend
+
+        # 0. Separator (Top)
+        ttk.Separator(self, orient="horizontal").pack(side="top", fill="x", pady=(0, 5))
 
         # 1. Active Process Label (Left)
         self.label = ttk.Label(
             self,
             text="Active Process: Waiting for order",
             font=("Segoe UI", 10),
-            bootstyle="inverse-secondary",
         )
         self.label.pack(side="left", pady=5)
 
